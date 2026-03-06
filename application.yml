@@ -43,7 +43,11 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
+    oauth:
+      enabled: true
     clients:
+      - MUSIC
+      - WEB
       - TVHTML5EMBEDDED
       - IOS
 

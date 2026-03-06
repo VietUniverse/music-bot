@@ -143,12 +143,19 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.reply({ content: "❌ Các lệnh nhạc chỉ có thể dùng trong server!", ephemeral: true });
     }
 
-    const voiceChannel = member?.voice?.channel;
-
     // ── /play ──
     if (commandName === "play") {
-        const voiceState = guild.voiceStates.cache.get(interaction.user.id);
-        const voiceChannel = voiceState?.channel;
+        let voiceChannel = member?.voice?.channel;
+
+        // Bắt buộc fetch member nếu cache rỗng (hay gặp ở Text-in-Voice)
+        if (!voiceChannel) {
+            try {
+                const fetchedMember = await guild.members.fetch(interaction.user.id);
+                voiceChannel = fetchedMember?.voice?.channel;
+            } catch (e) {
+                // Ignore fetch errors
+            }
+        }
 
         if (!voiceChannel) {
             return interaction.reply({ content: "❌ Bạn cần vào voice channel trước!", ephemeral: true });

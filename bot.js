@@ -138,6 +138,11 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName, guild, member, channel } = interaction;
+
+    if (!guild) {
+        return interaction.reply({ content: "❌ Các lệnh nhạc chỉ có thể dùng trong server!", ephemeral: true });
+    }
+
     const voiceChannel = member?.voice?.channel;
 
     // ── /play ──

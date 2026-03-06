@@ -145,24 +145,28 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.reply({ content: "❌ Các lệnh nhạc chỉ có thể dùng trong server!", ephemeral: true });
     }
 
-    let guild = interaction.guild || client.guilds.cache.get(guildId);
+    let guild = interaction.guild;
+
+    // Nếu không lấy được guild (bot chưa được add vào server mà dùng bằng User App)
     if (!guild) {
         try {
             guild = await client.guilds.fetch(guildId);
         } catch (e) {
             console.error("❌ Error fetching guild:", e);
-            return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin Server!", ephemeral: true });
+            return interaction.reply({
+                content: "❌ **Lỗi:** Bot chưa tham gia Server này!\n\nBạn đang dùng lệnh qua tính năng User App (ứng dụng cài vào cá nhân), nhưng để bot vào **Voice Channel** hát thì bot BẮT BUỘC phải được Add trực tiếp vào Server này.\n\n👉 Vui lòng gửi link mời bot cho Admin Server để họ thêm vào nhé!",
+                ephemeral: true
+            });
         }
     }
 
     let member = interaction.member;
-    // Nếu member là object raw từ API (không có thuộc tính voice), buộc fetch member
     if (!member || !member.voice) {
         try {
             member = await guild.members.fetch(interaction.user.id);
         } catch (e) {
             console.error("❌ Error fetching member:", e);
-            return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin User!", ephemeral: true });
+            return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin Voice của bạn (thử gõ lại lệnh nhé)!", ephemeral: true });
         }
     }
 

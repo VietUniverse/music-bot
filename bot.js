@@ -150,6 +150,7 @@ client.on("interactionCreate", async (interaction) => {
         try {
             guild = await client.guilds.fetch(guildId);
         } catch (e) {
+            console.error("❌ Error fetching guild:", e);
             return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin Server!", ephemeral: true });
         }
     }
@@ -160,6 +161,7 @@ client.on("interactionCreate", async (interaction) => {
         try {
             member = await guild.members.fetch(interaction.user.id);
         } catch (e) {
+            console.error("❌ Error fetching member:", e);
             return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin User!", ephemeral: true });
         }
     }

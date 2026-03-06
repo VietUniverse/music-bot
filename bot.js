@@ -137,10 +137,29 @@ client.lavalink.on("trackError", (player, track, payload) => {
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
-    const { commandName, guild, member, channel } = interaction;
+    const { commandName, channel, guildId } = interaction;
 
-    if (!guild) {
+    if (!guildId) {
         return interaction.reply({ content: "❌ Các lệnh nhạc chỉ có thể dùng trong server!", ephemeral: true });
+    }
+
+    let guild = interaction.guild || client.guilds.cache.get(guildId);
+    if (!guild) {
+        try {
+            guild = await client.guilds.fetch(guildId);
+        } catch (e) {
+            return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin Server!", ephemeral: true });
+        }
+    }
+
+    let member = interaction.member;
+    // Nếu member là object raw từ API (không có thuộc tính voice), buộc fetch member
+    if (!member || !member.voice) {
+        try {
+            member = await guild.members.fetch(interaction.user.id);
+        } catch (e) {
+            return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin User!", ephemeral: true });
+        }
     }
 
     // ── /play ──

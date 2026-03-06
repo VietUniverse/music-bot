@@ -1,0 +1,13 @@
+{
+    "name": "music-bot",
+    "version": "1.0.0",
+    "description": "Discord Music Bot with Lavalink v4 — runs on GitHub Actions 24/7",
+    "main": "bot.js",
+    "scripts": {
+        "start": "node bot.js"
+    },
+    "dependencies": {
+        "discord.js": "^14.16.3",
+        "lavalink-client": "^2.4.4"
+    }
+}

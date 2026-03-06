@@ -1,0 +1,5 @@
+node_modules/
+Lavalink.jar
+logs/
+.env
+plugins/

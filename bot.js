@@ -142,6 +142,9 @@ client.on("interactionCreate", async (interaction) => {
 
     // ── /play ──
     if (commandName === "play") {
+        const voiceState = guild.voiceStates.cache.get(interaction.user.id);
+        const voiceChannel = voiceState?.channel;
+
         if (!voiceChannel) {
             return interaction.reply({ content: "❌ Bạn cần vào voice channel trước!", ephemeral: true });
         }

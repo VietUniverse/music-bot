@@ -119,13 +119,20 @@ client.once("ready", async () => {
 client.on("raw", (d) => client.lavalink.sendRawData(d));
 
 // ─── Lavalink Events ──────────────────────────────────────────
-client.lavalink.on("nodeError", (node, error) => {
-    console.error(`❌ Lavalink Node ${node.id} Error: ${error.message}`, error);
+client.lavalink.nodeManager.on("error", (node, error) => {
+    console.error(`❌ Lavalink Node ${node.id} Error: ${error.message}`);
 });
 
-client.lavalink.on("nodeConnect", (node) => {
+client.lavalink.nodeManager.on("connect", (node) => {
     console.log(`✅ Lavalink Node ${node.id} Connected!`);
 });
+
+client.lavalink.nodeManager.on("disconnect", (node, reason) => {
+    console.log(`❌ Lavalink Node ${node.id} Disconnected:`, reason);
+});
+
+process.on("unhandledRejection", (reason) => console.error("❌ Unhandled Rejection:", reason));
+process.on("uncaughtException", (err) => console.error("❌ Uncaught Exception:", err));
 client.lavalink.on("trackStart", (player, track) => {
     const channel = client.channels.cache.get(player.textChannelId);
     if (channel) {

@@ -48,7 +48,7 @@ jobs:
       - name: Generate PoToken
         run: |
           echo "Generating YouTube PoToken..."
-          POT_JSON=$(npx --yes youtube-po-token-generator)
+          POT_JSON=$(NODE_OPTIONS=--max-old-space-size=4096 npx --yes youtube-po-token-generator)
           POT_TOKEN=$(echo $POT_JSON | jq -r .poToken)
           POT_VISITOR=$(echo $POT_JSON | jq -r .visitorData)
           echo "YOUTUBE_POT_TOKEN=$POT_TOKEN" >> $GITHUB_ENV

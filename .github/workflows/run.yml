@@ -18,6 +18,8 @@ jobs:
     env:
       DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
       LAVALINK_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
+      LAVALINK_SERVER_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
+      PLUGINS_YOUTUBE_OAUTH_REFRESHTOKEN: ${{ secrets.YOUTUBE_OAUTH_TOKEN }}
       JAVA_TOOL_OPTIONS: "-Xmx512m"
 
     steps:

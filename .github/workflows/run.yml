@@ -45,9 +45,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Generate PoToken
+        run: |
+          echo "Generating YouTube PoToken..."
+          POT_JSON=$(npx --yes youtube-po-token-generator)
+          POT_TOKEN=$(echo $POT_JSON | jq -r .poToken)
+          POT_VISITOR=$(echo $POT_JSON | jq -r .visitorData)
+          echo "YOUTUBE_POT_TOKEN=$POT_TOKEN" >> $GITHUB_ENV
+          echo "YOUTUBE_POT_VISITORDATA=$POT_VISITOR" >> $GITHUB_ENV
+          echo "PoToken generated successfully."
+
       - name: Start Lavalink + Bot
         env:
           LAVALINK_SERVER_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
+          YOUTUBE_POT_TOKEN: ${{ env.YOUTUBE_POT_TOKEN }}
+          YOUTUBE_POT_VISITORDATA: ${{ env.YOUTUBE_POT_VISITORDATA }}
         run: |
           # Start Lavalink in background
           java -jar Lavalink.jar &

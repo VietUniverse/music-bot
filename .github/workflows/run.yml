@@ -62,7 +62,7 @@ jobs:
           YOUTUBE_POT_VISITORDATA: ${{ env.YOUTUBE_POT_VISITORDATA }}
         run: |
           # Start Lavalink in background
-          java -jar Lavalink.jar &
+          java -Djava.net.preferIPv4Stack=true -jar Lavalink.jar &
           LAVALINK_PID=$!
 
           # Wait for Lavalink to be ready (port 2333)

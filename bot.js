@@ -24,6 +24,14 @@ const client = new Client({
 client.lavalink = new LavalinkManager({
     nodes: [
         {
+            authorization: "youshallnotpass", // The public node password
+            host: "stone.restfulapi.dev", // The public node host
+            port: 3128, // The public node port
+            id: "fallback-public",
+            retryDelay: 10000,
+            retryAmount: Infinity,
+        },
+        {
             authorization: LAVALINK_PASSWORD,
             host: "localhost",
             port: 2333,

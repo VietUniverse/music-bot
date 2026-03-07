@@ -46,10 +46,7 @@ plugins:
     oauth:
       enabled: true
     clients:
-      - MUSIC
-      - WEB
-      - WEBEMBEDDED
-      - ANDROID_VR
+      - TV
 
 logging:
   file:
@@ -57,6 +54,7 @@ logging:
   level:
     root: WARN
     lavalink: INFO
+    dev.lavalink.youtube: INFO
   logback:
     rollingpolicy:
       max-file-size: 10MB

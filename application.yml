@@ -46,6 +46,8 @@ plugins:
     oauth:
       enabled: true
     clients:
+      - TV
+      - TVHTML5_SIMPLY
       - MUSIC
       - WEB
       - WEBEMBEDDED

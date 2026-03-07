@@ -48,8 +48,8 @@ plugins:
     clients:
       - MUSIC
       - WEB
-      - TV
-      - IOS
+      - WEBEMBEDDED
+      - ANDROID_VR
 
 logging:
   file:

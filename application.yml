@@ -45,6 +45,9 @@ plugins:
     allowDirectPlaylistIds: true
     oauth:
       enabled: true
+    remoteCipher:
+      url: "https://cipher.kikkia.dev/"
+      userAgent: "DuViMusicBot"
     pot:
       token: ${YOUTUBE_POT_TOKEN:AKNnI0zy_g9ioWPUjzs49FwmQBSSl0AJCM5JB7lPYp}
       visitorData: ${YOUTUBE_POT_VISITORDATA:CgtYNnJ4b1BPeVJJSSjAvq7NBjIKCgJWThIEGgAgOpoRRuy9GgGG4o=}

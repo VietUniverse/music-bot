@@ -48,7 +48,7 @@ plugins:
     clients:
       - MUSIC
       - WEB
-      - TVHTML5_SIMPLY
+      - TVHTML5
       - IOS
 
 logging:

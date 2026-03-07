@@ -46,7 +46,10 @@ plugins:
     oauth:
       enabled: true
     clients:
-      - TV
+      - MUSIC
+      - WEB
+      - WEBEMBEDDED
+      - ANDROID_VR
 
 logging:
   file:

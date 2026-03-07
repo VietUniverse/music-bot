@@ -126,13 +126,22 @@ client.lavalink.on("queueEnd", (player) => {
 client.lavalink.on("trackStuck", (player, track) => {
     const channel = client.channels.cache.get(player.textChannelId);
     if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription(`⚠️ Track bị stuck: **${track.info.title}** — đang skip...`)] }).catch(() => { });
-    player.skip();
+    if (player.queue.tracks.length > 0) {
+        player.skip();
+    } else {
+        player.stopPlaying();
+    }
 });
 
 client.lavalink.on("trackError", (player, track, payload) => {
+    console.error("❌ Lavalink Track Error:", payload.error || payload);
     const channel = client.channels.cache.get(player.textChannelId);
-    if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription(`❌ Lỗi phát: **${track.info.title}** — đang skip...`)] }).catch(() => { });
-    player.skip();
+    if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription(`❌ Lỗi phát: **${track.info.title}**\nChi tiết: \`${payload.error || "Unknown Error"}\` — đang skip...`)] }).catch(() => { });
+    if (player.queue.tracks.length > 0) {
+        player.skip();
+    } else {
+        player.stopPlaying();
+    }
 });
 
 // ─── Interaction Handler ───────────────────────────────────────

@@ -27,7 +27,7 @@ client.lavalink = new LavalinkManager({
             authorization: "youshallnotpass", // The public node password
             host: "stone.restfulapi.dev", // The public node host
             port: 3128, // The public node port
-            secure: true, // Required for wss://
+            secure: false,
             id: "fallback-public",
             retryDelay: 10000,
             retryAmount: Infinity,

@@ -27,6 +27,7 @@ client.lavalink = new LavalinkManager({
             authorization: "youshallnotpass", // The public node password
             host: "stone.restfulapi.dev", // The public node host
             port: 3128, // The public node port
+            secure: true, // Required for wss://
             id: "fallback-public",
             retryDelay: 10000,
             retryAmount: Infinity,
@@ -106,7 +107,11 @@ async function registerCommands() {
 client.once("ready", async () => {
     console.log(`🤖 Bot online: ${client.user.tag}`);
     client.lavalink.options.client.id = client.user.id;
-    await client.lavalink.init({ id: client.user.id, username: client.user.username });
+    try {
+        await client.lavalink.init({ id: client.user.id, username: client.user.username });
+    } catch (e) {
+        console.error("❌ Lỗi khởi tạo Lavalink:", e);
+    }
     await registerCommands();
 });
 
@@ -114,6 +119,13 @@ client.once("ready", async () => {
 client.on("raw", (d) => client.lavalink.sendRawData(d));
 
 // ─── Lavalink Events ──────────────────────────────────────────
+client.lavalink.on("nodeError", (node, error) => {
+    console.error(`❌ Lavalink Node ${node.id} Error: ${error.message}`, error);
+});
+
+client.lavalink.on("nodeConnect", (node) => {
+    console.log(`✅ Lavalink Node ${node.id} Connected!`);
+});
 client.lavalink.on("trackStart", (player, track) => {
     const channel = client.channels.cache.get(player.textChannelId);
     if (channel) {

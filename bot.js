@@ -24,9 +24,9 @@ const client = new Client({
 client.lavalink = new LavalinkManager({
     nodes: [
         {
-            authorization: "youshallnotpass", // The public node password
-            host: "stone.restfulapi.dev", // The public node host
-            port: 3128, // The public node port
+            authorization: "https://seretia.link/discord", // The public node password
+            host: "lavalinkv4.serenetia.com", // The public node host
+            port: 80, // The public node port
             secure: false,
             id: "fallback-public",
             retryDelay: 10000,

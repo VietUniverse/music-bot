@@ -34,7 +34,7 @@ client.lavalink = new LavalinkManager({
         },
         {
             authorization: LAVALINK_PASSWORD,
-            host: "localhost",
+            host: "127.0.0.1",
             port: 2333,
             id: "main",
             retryDelay: 5000,

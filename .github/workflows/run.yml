@@ -58,7 +58,7 @@ jobs:
           # Wait for Lavalink to be ready (port 2333)
           echo "⏳ Waiting for Lavalink to start..."
           for i in $(seq 1 60); do
-            if curl -s http://localhost:2333/version > /dev/null 2>&1; then
+            if curl -s http://127.0.0.1:2333/version > /dev/null 2>&1; then
               echo "✅ Lavalink is ready!"
               break
             fi

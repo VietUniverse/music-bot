@@ -3,3 +3,6 @@ Lavalink.jar
 logs/
 .env
 plugins/
+youtube-source-*/
+yt-cipher/
+yt.tar.gz

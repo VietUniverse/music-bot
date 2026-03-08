@@ -17,57 +17,18 @@ jobs:
 
     env:
       DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-      LAVALINK_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
-      LAVALINK_SERVER_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
-      PLUGINS_YOUTUBE_OAUTH_REFRESHTOKEN: ${{ secrets.YOUTUBE_OAUTH_TOKEN }}
-      JAVA_TOOL_OPTIONS: "-Xmx512m"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
 
       - name: Setup Node 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Download Lavalink
-        run: |
-          curl -L -o Lavalink.jar \
-            "https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar"
-
       - name: Install dependencies
         run: npm install
 
-      - name: Start Lavalink + Bot
-        env:
-          LAVALINK_SERVER_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
-          YOUTUBE_POT_TOKEN: ${{ secrets.YOUTUBE_POT_TOKEN }}
-          YOUTUBE_POT_VISITORDATA: ${{ secrets.YOUTUBE_POT_VISITORDATA }}
-        run: |
-          # Start Lavalink in background
-          java -Djava.net.preferIPv4Stack=true -jar Lavalink.jar &
-          LAVALINK_PID=$!
-
-          # Wait for Lavalink to be ready (port 2333)
-          echo "⏳ Waiting for Lavalink to start..."
-          for i in $(seq 1 60); do
-            if curl -s http://127.0.0.1:2333/version > /dev/null 2>&1; then
-              echo "✅ Lavalink is ready!"
-              break
-            fi
-            if [ $i -eq 60 ]; then
-              echo "❌ Lavalink failed to start after 60s"
-              exit 1
-            fi
-            sleep 1
-          done
-
-          # Start bot (foreground — keeps the job alive)
-          node bot.js
+      - name: Start Bot
+        run: node bot.js

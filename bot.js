@@ -24,19 +24,20 @@ const client = new Client({
 client.lavalink = new LavalinkManager({
     nodes: [
         {
-            authorization: "https://seretia.link/discord", // The public node password
-            host: "lavalinkv4.serenetia.com", // The public node host
-            port: 80, // The public node port
-            secure: false,
-            id: "fallback-public",
-            retryDelay: 10000,
+            authorization: "youshallnotpass",
+            host: "lavalink.jirayu.net",
+            port: 443,
+            secure: true,
+            id: "jirayu",
+            retryDelay: 5000,
             retryAmount: Infinity,
         },
         {
-            authorization: LAVALINK_PASSWORD,
-            host: "127.0.0.1",
-            port: 2333,
-            id: "main",
+            authorization: "https://seretia.link/discord",
+            host: "lavalinkv4.serenetia.com",
+            port: 443,
+            secure: true,
+            id: "serenetia",
             retryDelay: 5000,
             retryAmount: Infinity,
         },

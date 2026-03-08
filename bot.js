@@ -144,11 +144,11 @@ client.lavalink.on("trackStart", (player, track) => {
 client.lavalink.on("queueEnd", (player) => {
     const channel = client.channels.cache.get(player.textChannelId);
     if (channel) {
-        channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("📭 Hết nhạc trong queue — rời voice channel.")] }).catch(() => { });
+        channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("📭 Hết nhạc trong queue — sẽ rời voice channel sau 3 phút.")] }).catch(() => { });
     }
     setTimeout(() => {
-        player.destroy();
-    }, 3000);
+        if (!player.playing) player.destroy();
+    }, 180000);
 });
 
 client.lavalink.on("trackStuck", (player, track) => {
@@ -270,7 +270,7 @@ client.on("interactionCreate", async (interaction) => {
             if (player.playing) {
                 await interaction.editReply({ embeds: [trackEmbed(track, "📥 Đã thêm vào queue")] });
             } else {
-                await interaction.editReply({ embeds: [trackEmbed(track, "🎵 Đang phát")] });
+                await interaction.editReply({ content: `🎵 Đang tải: **${track.info.title}**...` });
             }
         }
 

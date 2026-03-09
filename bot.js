@@ -64,6 +64,13 @@ const commands = [
     new SlashCommandBuilder().setName("resume").setDescription("▶ Tiếp tục phát"),
     new SlashCommandBuilder().setName("volume").setDescription("🔊 Chỉnh âm lượng")
         .addIntegerOption(o => o.setName("level").setDescription("Âm lượng (1-150)").setRequired(true).setMinValue(1).setMaxValue(150)),
+    new SlashCommandBuilder().setName("loop").setDescription("🔁 Lặp lại bài hát / queue")
+        .addStringOption(o => o.setName("mode").setDescription("Chế độ lặp").setRequired(true)
+            .addChoices(
+                { name: "❌ Tắt lặp", value: "off" },
+                { name: "🔂 Lặp bài hiện tại", value: "track" },
+                { name: "🔁 Lặp cả queue", value: "queue" },
+            )),
 ];
 
 // ─── Helper Functions ──────────────────────────────────────────
@@ -118,6 +125,41 @@ client.once("ready", async () => {
 
 // ─── Forward voice state updates to Lavalink ───────────────────
 client.on("raw", (d) => client.lavalink.sendRawData(d));
+
+// ─── Auto-leave when voice channel is empty ─────────────────
+const emptyTimers = new Map();
+
+client.on("voiceStateUpdate", (oldState, newState) => {
+    // Only care about the guild where bot is playing
+    const guildId = oldState.guild.id || newState.guild.id;
+    const player = client.lavalink.getPlayer(guildId);
+    if (!player) return;
+
+    const voiceChannel = oldState.guild.channels.cache.get(player.voiceChannelId);
+    if (!voiceChannel) return;
+
+    // Count non-bot members in the voice channel
+    const humans = voiceChannel.members.filter(m => !m.user.bot).size;
+
+    if (humans === 0) {
+        // No humans left, start 30s timer
+        if (!emptyTimers.has(guildId)) {
+            const timer = setTimeout(() => {
+                const ch = client.channels.cache.get(player.textChannelId);
+                if (ch) ch.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("👋 Không còn ai trong voice channel \u2014 đã rời!")] }).catch(() => { });
+                player.destroy();
+                emptyTimers.delete(guildId);
+            }, 30000);
+            emptyTimers.set(guildId, timer);
+        }
+    } else {
+        // Someone joined back, cancel timer
+        if (emptyTimers.has(guildId)) {
+            clearTimeout(emptyTimers.get(guildId));
+            emptyTimers.delete(guildId);
+        }
+    }
+});
 
 // ─── Lavalink Events ──────────────────────────────────────────
 client.lavalink.nodeManager.on("error", (node, error) => {
@@ -382,6 +424,25 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply({
             embeds: [new EmbedBuilder().setColor(0x57F287).setDescription(`🔊 Âm lượng: **${level}%**`)],
         });
+    }
+
+    // ── /loop ──
+    else if (commandName === "loop") {
+        const player = client.lavalink.getPlayer(guild.id);
+        if (!player || !player.playing) {
+            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+        }
+        const mode = interaction.options.getString("mode");
+        if (mode === "off") {
+            player.setRepeatMode("off");
+            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("❌ Đã tắt lặp lại.")] });
+        } else if (mode === "track") {
+            player.setRepeatMode("track");
+            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("🔂 Lặp lại **bài hiện tại** vô hạn.")] });
+        } else if (mode === "queue") {
+            player.setRepeatMode("queue");
+            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("🔁 Lặp lại **cả queue** vô hạn.")] });
+        }
     }
 });
 

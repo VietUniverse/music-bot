@@ -71,6 +71,7 @@ const commands = [
                 { name: "🔂 Lặp bài hiện tại", value: "track" },
                 { name: "🔁 Lặp cả queue", value: "queue" },
             )),
+    new SlashCommandBuilder().setName("replay").setDescription("⏪ Phát lại bài hiện tại từ đầu"),
 ];
 
 // ─── Helper Functions ──────────────────────────────────────────
@@ -423,6 +424,18 @@ client.on("interactionCreate", async (interaction) => {
         await player.setVolume(level);
         await interaction.reply({
             embeds: [new EmbedBuilder().setColor(0x57F287).setDescription(`🔊 Âm lượng: **${level}%**`)],
+        });
+    }
+
+    // ── /replay ──
+    else if (commandName === "replay") {
+        const player = client.lavalink.getPlayer(guild.id);
+        if (!player || !player.queue.current) {
+            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+        }
+        await player.seek(0);
+        await interaction.reply({
+            embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("⏪ Đã phát lại bài hát từ đầu.")],
         });
     }
 

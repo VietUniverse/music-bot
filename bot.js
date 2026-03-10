@@ -24,11 +24,11 @@ const client = new Client({
 client.lavalink = new LavalinkManager({
     nodes: [
         {
-            authorization: "youshallnotpass",
-            host: "lavalink.jirayu.net",
+            authorization: "https://dsc.gg/ajidevserver",
+            host: "lava-v4.ajieblogs.eu.org",
             port: 443,
             secure: true,
-            id: "jirayu",
+            id: "ajieblogs-v4",
             retryDelay: 5000,
             retryAmount: Infinity,
         },

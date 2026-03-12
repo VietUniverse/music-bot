@@ -22,8 +22,8 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const allNodes = [
-    { authorization: "nyxbot.app/support", host: "sg1-nodelink.nyxbot.app", port: 3000, secure: false, id: "nyx1", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "nyxbot.app/support", host: "sg2-nodelink.nyxbot.app", port: 3000, secure: false, id: "nyx2", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "https://seretia.link/discord", host: "lavalinkv4.serenetia.com", port: 443, secure: true, id: "serenetia", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "https://dsc.gg/ajidevserver", host: "lava-v4.ajieblogs.eu.org", port: 443, secure: true, id: "ajieblogs-v4", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "lavalinklol", host: "lava.g3v.co.uk", port: 9008, secure: false, id: "g3v", retryDelay: 5000, retryAmount: Infinity }
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;

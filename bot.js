@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, EmbedBuilder, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { LavalinkManager } = require("lavalink-client");
-const playdl = require("play-dl");
+const ytdl = require("@distube/ytdl-core");
 
 // ─── Config ────────────────────────────────────────────────────
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
@@ -301,25 +301,24 @@ client.on("interactionCreate", async (interaction) => {
         let ytMetaData = null;
 
         try {
-            // Check if play-dl should intercept (YouTube URLs or general searches)
+            // Check if it's a direct YouTube URL
             if (query.includes("youtube.com") || query.includes("youtu.be")) {
-                const streamInfo = await playdl.stream(query);
-                finalQuery = streamInfo.url;
-                isYTRawStream = true;
-                ytMetaData = await playdl.video_info(query);
-            } else if (!query.startsWith("http")) { // Normal text search
-                const searchRes = await playdl.search(query, { limit: 1 });
-                if (searchRes && searchRes.length > 0) {
-                    const videoUrl = searchRes[0].url;
-                    const streamInfo = await playdl.stream(videoUrl);
-                    finalQuery = streamInfo.url;
+                const info = await ytdl.getInfo(query);
+                const format = ytdl.chooseFormat(info.formats, { filter: 'audioonly' });
+                if (format && format.url) {
+                    finalQuery = format.url;
                     isYTRawStream = true;
-                    ytMetaData = await playdl.video_info(videoUrl);
+                    ytMetaData = info;
                 }
+            } else if (!query.startsWith("http")) { // Normal text search
+                // Use ytdl-core's basic search or fallback to scsearch
+                // Since ytdl-core doesn't have a reliable built-in search like play-dl,
+                // we will fallback to Lavalink's native scsearch for text search queries.
+                finalQuery = `scsearch:${query}`;
             }
         } catch (e) {
-            console.error("play-dl extraction failed:", e);
-            // Fallback to natively searching so it doesn't crash entirely if play-dl acts up
+            console.error("ytdl-core extraction failed:", e);
+            // Fallback to natively searching so it doesn't crash entirely
         }
 
         const result = await player.search({ query: finalQuery }, interaction.user);
@@ -328,12 +327,12 @@ client.on("interactionCreate", async (interaction) => {
             return interaction.editReply({ content: "❌ Không tìm thấy bài hát hoặc lỗi giải mã luồng âm thanh!" });
         }
 
-        // If we bypassed using play-dl, Lavalink sees it as a raw HTTP link. We must fix the display metadata.
+        // If we bypassed using ytdl-core, Lavalink sees it as a raw HTTP link. We must fix the display metadata.
         if (isYTRawStream && ytMetaData) {
-            result.tracks[0].info.title = ytMetaData.video_details.title;
-            result.tracks[0].info.author = ytMetaData.video_details.channel.name;
-            result.tracks[0].info.uri = ytMetaData.video_details.url;
-            result.tracks[0].info.artworkUrl = ytMetaData.video_details.thumbnails?.length ? ytMetaData.video_details.thumbnails[0].url : null;
+            result.tracks[0].info.title = ytMetaData.videoDetails.title;
+            result.tracks[0].info.author = ytMetaData.videoDetails.author.name;
+            result.tracks[0].info.uri = ytMetaData.videoDetails.video_url;
+            result.tracks[0].info.artworkUrl = ytMetaData.videoDetails.thumbnails?.length ? ytMetaData.videoDetails.thumbnails[0].url : null;
             result.tracks[0].sourceName = "youtube";
         }
 

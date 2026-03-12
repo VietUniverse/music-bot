@@ -27,11 +27,12 @@ const allNodes = [
     { authorization: "https://dsc.gg/ajidevserver", host: "lava-v4.ajieblogs.eu.org", port: 443, secure: true, id: "ajieblogs-v4", retryDelay: 5000, retryAmount: Infinity }
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
-const selectedNode = allNodes[nodeIndex] || allNodes[0];
-console.log(`[BOT] Assigned to node index ${nodeIndex} (${selectedNode.id})`);
+// Rotate nodes so each bot prefers a different node, but keeps the rest as fallbacks for high availability
+const priorityNodes = [...allNodes.slice(nodeIndex), ...allNodes.slice(0, nodeIndex)];
+console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
 client.lavalink = new LavalinkManager({
-    nodes: [selectedNode],
+    nodes: priorityNodes,
     sendToShard: (guildId, payload) => {
         const guild = client.guilds.cache.get(guildId);
         if (guild) guild.shard.send(payload);
@@ -315,8 +316,8 @@ client.on("interactionCreate", async (interaction) => {
     // ── /skip ──
     else if (commandName === "skip") {
         const player = client.lavalink.getPlayer(guild.id);
-        if (!player || !player.playing) {
-            return interaction.reply({ content: "❌ Không có bài nào đang phát!", ephemeral: true });
+        if (!player || !player.queue.current) {
+            return interaction.reply({ content: "❌ Không có bài nào trong hàng đợi!", ephemeral: true });
         }
         const current = player.queue.current;
         await player.skip();
@@ -432,7 +433,7 @@ client.on("interactionCreate", async (interaction) => {
     // ── /loop ──
     else if (commandName === "loop") {
         const player = client.lavalink.getPlayer(guild.id);
-        if (!player || !player.playing) {
+        if (!player || !player.queue.current) {
             return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
         }
         const mode = interaction.options.getString("mode");

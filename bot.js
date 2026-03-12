@@ -28,7 +28,19 @@ const allNodes = [
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
 // Rotate nodes so each bot prefers a different node, but keeps the rest as fallbacks for high availability
-const priorityNodes = [...allNodes.slice(nodeIndex), ...allNodes.slice(0, nodeIndex)];
+const rotatedNodes = [...allNodes.slice(nodeIndex), ...allNodes.slice(0, nodeIndex)];
+
+const localNode = {
+    authorization: "youshallnotpass",
+    host: "localhost",
+    port: 2333,
+    secure: false,
+    id: "localhost-action",
+    retryDelay: 5000,
+    retryAmount: Infinity
+};
+
+const priorityNodes = [localNode, ...rotatedNodes];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
 client.lavalink = new LavalinkManager({

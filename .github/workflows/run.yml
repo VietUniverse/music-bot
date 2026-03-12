@@ -23,10 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 18
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
       - name: Install dependencies
         run: npm install
@@ -47,4 +47,4 @@ jobs:
         run: sleep 10
 
       - name: Start Bot
-        run: node bot.js
+        run: node --max-old-space-size=1024 bot.js

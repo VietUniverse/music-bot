@@ -22,9 +22,9 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const allNodes = [
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "https://seretia.link/discord", host: "lavalinkv4.serenetia.com", port: 443, secure: true, id: "serenetia", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://dsc.gg/ajidevserver", host: "lava-v4.ajieblogs.eu.org", port: 443, secure: true, id: "ajieblogs-v4", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "lavalinklol", host: "lava.g3v.co.uk", port: 9008, secure: false, id: "g3v", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://dsc.gg/ajidevserver", host: "lava-v4.ajieblogs.eu.org", port: 443, secure: true, id: "ajieblogs-v4", retryDelay: 5000, retryAmount: Infinity }
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
 const selectedNode = allNodes[nodeIndex] || allNodes[0];

@@ -17,6 +17,7 @@ jobs:
 
     env:
       DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+      BOT_NODE_INDEX: 0
 
     steps:
       - name: Checkout

@@ -7,7 +7,6 @@
         "start": "node bot.js"
     },
     "dependencies": {
-        "@distube/ytdl-core": "latest",
         "discord.js": "^14.16.3",
         "lavalink-client": "^2.4.4"
     }

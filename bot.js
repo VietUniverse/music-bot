@@ -1,6 +1,5 @@
 const { Client, GatewayIntentBits, EmbedBuilder, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { LavalinkManager } = require("lavalink-client");
-const ytdl = require("@distube/ytdl-core");
 
 // ─── Config ────────────────────────────────────────────────────
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
@@ -297,45 +296,41 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         let finalQuery = query;
-        let isYTRawStream = false;
-        let ytMetaData = null;
 
+        // Bypass IP-blocking by routing ALL YouTube queries to SoundCloud.
         try {
-            // Check if it's a direct YouTube URL
             if (query.includes("youtube.com") || query.includes("youtu.be")) {
-                const info = await ytdl.getInfo(query);
-                const format = ytdl.chooseFormat(info.formats, { filter: 'audioonly' });
-                if (format && format.url) {
-                    finalQuery = format.url;
-                    isYTRawStream = true;
-                    ytMetaData = info;
+                // If the user pasted a direct YouTube link, we extract the title via oEmbed
+                // and search for that title natively purely on SoundCloud.
+                const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(query)}&format=json`;
+                const res = await fetch(oembedUrl);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.title) {
+                        finalQuery = `scsearch:${data.title}`;
+                    } else {
+                        finalQuery = `scsearch:${query}`;
+                    }
+                } else {
+                    // Cannot fetch title, ignore link entirely to prevent proxy-close loop
+                    return interaction.editReply({ content: "❌ Do chống bot YouTube gắt gao, hãy tự gõ **Tên Bài Hát** thay vì gửi link nhé!" });
                 }
-            } else if (!query.startsWith("http")) { // Normal text search
-                // Use ytdl-core's basic search or fallback to scsearch
-                // Since ytdl-core doesn't have a reliable built-in search like play-dl,
-                // we will fallback to Lavalink's native scsearch for text search queries.
+            } else if (!query.startsWith("http")) { 
+                // Any normal text search bypasses YouTube and goes directly to SoundCloud
                 finalQuery = `scsearch:${query}`;
             }
         } catch (e) {
-            console.error("ytdl-core extraction failed:", e);
-            // Fallback to natively searching so it doesn't crash entirely
+            console.error("URL parsing failed:", e);
+            finalQuery = `scsearch:${query}`;
         }
 
         const result = await player.search({ query: finalQuery }, interaction.user);
 
         if (!result || !result.tracks?.length) {
-            return interaction.editReply({ content: "❌ Không tìm thấy bài hát hoặc lỗi giải mã luồng âm thanh!" });
+            return interaction.editReply({ content: "❌ Không tìm thấy bài hát trên hệ thống dự phòng!" });
         }
 
-        // If we bypassed using ytdl-core, Lavalink sees it as a raw HTTP link. We must fix the display metadata.
-        if (isYTRawStream && ytMetaData) {
-            result.tracks[0].info.title = ytMetaData.videoDetails.title;
-            result.tracks[0].info.author = ytMetaData.videoDetails.author.name;
-            result.tracks[0].info.uri = ytMetaData.videoDetails.video_url;
-            result.tracks[0].info.artworkUrl = ytMetaData.videoDetails.thumbnails?.length ? ytMetaData.videoDetails.thumbnails[0].url : null;
-            result.tracks[0].sourceName = "youtube";
-        }
-
+        // We don't overwrite metadata anymore, the SoundCloud metadata is perfectly valid.
         if (result.loadType === "playlist") {
             for (const track of result.tracks) {
                 player.queue.add(track);

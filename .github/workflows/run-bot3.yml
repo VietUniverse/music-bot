@@ -3,6 +3,7 @@ name: Run Music Bot 3
 on:
   workflow_dispatch:
   schedule:
+    # Mỗi 6 giờ tại phút 50 → restart trước khi chạm giới hạn 6h
     - cron: "0 */6 * * *"
 
 concurrency:
@@ -30,20 +31,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Download Lavalink
-        run: wget https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar
-
-      - name: Start Lavalink
-        run: java -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true -jar Lavalink.jar &
-
-      - name: Wait for Lavalink
-        run: sleep 10
-
       - name: Run node bot.js
-        run: node --max-old-space-size=1024 --dns-result-order=ipv4first bot.js
+        run: node --max-old-space-size=1024 bot.js

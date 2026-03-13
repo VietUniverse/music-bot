@@ -33,6 +33,3 @@ jobs:
 
       - name: Start Bot
         run: node --max-old-space-size=1024 bot.js
-
-      - name: Start Bot
-        run: node --max-old-space-size=1024 bot.js

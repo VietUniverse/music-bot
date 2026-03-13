@@ -25,9 +25,9 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const priorityNodes = [
+    { authorization: "youshallnotpass", host: "127.0.0.1", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "youshallnotpass", host: "lava.vulk.moe", port: 443, secure: true, id: "vulk-moe", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "youshallnotpass", host: "127.0.0.1", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
 ];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
@@ -354,8 +354,14 @@ client.on("interactionCreate", async (interaction) => {
             });
         }
 
-        // Only start if not playing and nothing is currently queued as current
-        if (!player.playing && !player.queue.current) await player.play();
+        // Start playing if not already playing. 
+        // We removed !player.queue.current because add() might set it, causing this to skip.
+        if (!player.playing) {
+            console.log(`▶ [${INSTANCE_ID}] Starting playback for: ${track.info.title}`);
+            await player.play();
+        } else {
+            console.log(`⏳ [${INSTANCE_ID}] Track queued: ${track.info.title}`);
+        }
     }
 
     // ── /skip ──

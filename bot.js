@@ -22,7 +22,8 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const priorityNodes = [
-    { authorization: "youshallnotpass", host: "localhost", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "127.0.0.1", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity }
 ];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
@@ -38,13 +39,8 @@ client.lavalink = new LavalinkManager({
     }
 });
 
-client.on("raw", (d) => {
-    // Only forward Voice events to prevent Lavalink from getting confused
-    // by meaningless typing/presence gateway payloads
-    if (d.t === "VOICE_SERVER_UPDATE" || d.t === "VOICE_STATE_UPDATE") {
-        client.lavalink.sendRawData(d);
-    }
-});
+client.on("raw", (d) => client.lavalink.sendRawData(d));
+
 const commands = [
     new SlashCommandBuilder().setName("play").setDescription("🎵 Phát nhạc từ YouTube/SoundCloud/URL")
         .addStringOption(o => o.setName("query").setDescription("Tên bài hát hoặc URL").setRequired(true)),

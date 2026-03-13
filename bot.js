@@ -21,24 +21,10 @@ const client = new Client({
 });
 
 // ─── Lavalink Manager ──────────────────────────────────────────
-const allNodes = [
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
+const priorityNodes = [
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "localhost", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity }
 ];
-const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
-// Rotate nodes so each bot prefers a different node
-const rotatedNodes = [...allNodes.slice(nodeIndex), ...allNodes.slice(0, nodeIndex)];
-
-const localNode = {
-    authorization: "youshallnotpass",
-    host: "localhost",
-    port: 2333,
-    secure: false,
-    id: "localhost-action",
-    retryDelay: 5000,
-    retryAmount: Infinity
-};
-
-const priorityNodes = [...rotatedNodes, localNode];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
 client.lavalink = new LavalinkManager({
@@ -49,11 +35,17 @@ client.lavalink = new LavalinkManager({
     },
     autoSkip: true,
     client: {
-        id: null, // set on ready
-    },
+        id: null // set on ready
+    }
 });
 
-// ─── Slash Commands Definition ─────────────────────────────────
+client.on("raw", (d) => {
+    // Only forward Voice events to prevent Lavalink from getting confused
+    // by meaningless typing/presence gateway payloads
+    if (d.t === "VOICE_SERVER_UPDATE" || d.t === "VOICE_STATE_UPDATE") {
+        client.lavalink.sendRawData(d);
+    }
+});
 const commands = [
     new SlashCommandBuilder().setName("play").setDescription("🎵 Phát nhạc từ YouTube/SoundCloud/URL")
         .addStringOption(o => o.setName("query").setDescription("Tên bài hát hoặc URL").setRequired(true)),
@@ -125,9 +117,6 @@ client.once("ready", async () => {
     await registerCommands();
 });
 
-// ─── Forward voice state updates to Lavalink ───────────────────
-client.on("raw", (d) => client.lavalink.sendRawData(d));
-
 // ─── Auto-leave when voice channel is empty ─────────────────
 const emptyTimers = new Map();
 
@@ -174,6 +163,16 @@ client.lavalink.nodeManager.on("connect", (node) => {
 
 client.lavalink.nodeManager.on("disconnect", (node, reason) => {
     console.log(`❌ Lavalink Node ${node.id} Disconnected:`, reason);
+});
+
+client.lavalink.on("playerCreate", (player) => console.log(`🟡 Player Created for ${player.guildId}`));
+client.lavalink.on("playerDestroy", (player) => console.log(`🔴 Player Destroyed for ${player.guildId}`));
+
+// Debug Voice Connection state
+client.lavalink.on("playerUpdate", (player) => {
+    if (player.connected && !player.playing && player.queue.current) {
+        console.log(`⚠️ Player stuck on ${player.guildId} - Connected but not playing!`);
+    }
 });
 
 process.on("unhandledRejection", (reason) => console.error("❌ Unhandled Rejection:", reason));

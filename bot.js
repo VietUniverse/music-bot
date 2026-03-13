@@ -22,8 +22,7 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const allNodes = [
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava.millohost.my.id", port: 443, secure: true, id: "millohost2", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
 // Rotate nodes so each bot prefers a different node

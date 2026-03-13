@@ -165,12 +165,12 @@ client.lavalink.nodeManager.on("disconnect", (node, reason) => {
 });
 
 client.lavalink.on("playerCreate", (player) => {
-    console.log(`🟡 Player Created for ${player.guildId} on node: ${player.node.id}`);
+    console.log(`🟡 Player Created for ${player.guildId} on node: ${player.node?.id || "unknown"}`);
 });
 client.lavalink.on("playerDestroy", (player) => console.log(`🔴 Player Destroyed for ${player.guildId}`));
 
 client.lavalink.on("playerUpdate", (player) => {
-    console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${player.node.id}, Connected: ${player.connected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
+    console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${player.node?.id || "unknown"}, Connected: ${player.connected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
     if (player.connected && !player.playing && player.queue.current) {
         console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
     }
@@ -355,12 +355,11 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         // Start playing if not already playing. 
-        // We removed !player.queue.current because add() might set it, causing this to skip.
         if (!player.playing) {
-            console.log(`▶ [${INSTANCE_ID}] Starting playback for: ${track.info.title}`);
+            console.log(`▶ [${INSTANCE_ID}] Starting playback for: ${player.queue.current?.info?.title || "Unknown Track"}`);
             await player.play();
         } else {
-            console.log(`⏳ [${INSTANCE_ID}] Track queued: ${track.info.title}`);
+            console.log(`⏳ [${INSTANCE_ID}] Track queued: ${player.queue.current?.info?.title || "Unknown Track"}`);
         }
     }
 

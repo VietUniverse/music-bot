@@ -25,19 +25,22 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
-    { authorization: "https://seretia.link/discord", host: "lavalinkv4.serenetia.com", port: 443, secure: true, id: "serenetia", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 443, secure: true, id: "jirayu", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "https://seretia.link/discord", host: "lavalinkv4.serenetia.com", port: 443, secure: true, id: "serenetia", retryDelay: 5000, retryAmount: Infinity }
 ];
 
 // Distributed Priority based on BOT_NODE_INDEX if provided, otherwise default rotation
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
-const priorityNodes = [...publicNodes.slice(nodeIndex % publicNodes.length), ...publicNodes.slice(0, nodeIndex % publicNodes.length)];
+// We'll filter out the 502 node from being first if possible, but keep the list as fallbacks
+const sortedNodes = [...publicNodes];
+const priorityNodes = [...sortedNodes.slice(nodeIndex % sortedNodes.length), ...sortedNodes.slice(0, nodeIndex % sortedNodes.length)];
 
 console.log(`[BOT] Prioritizing node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
 client.lavalink = new LavalinkManager({
     nodes: priorityNodes,
+    // ... rest of config
     sendToShard: (guildId, payload) => {
         const guild = client.guilds.cache.get(guildId);
         if (guild) guild.shard.send(payload);
@@ -176,8 +179,11 @@ client.lavalink.on("playerCreate", (player) => {
 client.lavalink.on("playerDestroy", (player) => console.log(`🔴 Player Destroyed for ${player.guildId}`));
 
 client.lavalink.on("playerUpdate", (player) => {
-    console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${player.node?.id || "unknown"}, Connected: ${player.connected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
-    if (player.connected && !player.playing && player.queue.current) {
+    // In v2, player.node exists but might be accessed differently in updates
+    const nodeId = player.node?.id || player.nodeId || "unknown";
+    const isConnected = !!player.voiceChannelId;
+    console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${nodeId}, Connected: ${isConnected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
+    if (isConnected && !player.playing && player.queue.current) {
         console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
     }
 });

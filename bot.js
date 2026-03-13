@@ -222,10 +222,39 @@ client.lavalink.on("trackStuck", (player, track) => {
     }
 });
 
-client.lavalink.on("trackError", (player, track, payload) => {
-    console.error("❌ Lavalink Track Error:", payload.error || payload);
+client.lavalink.on("trackError", async (player, track, payload) => {
+    console.error(`❌ [${INSTANCE_ID}] Lavalink Track Error for ${track.info.title}:`, payload.exception?.message || payload.error || payload);
+    
     const channel = client.channels.cache.get(player.textChannelId);
-    if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription(`❌ Lỗi phát: **${track.info.title}**\nChi tiết: \`${payload.error || "Unknown Error"}\` — đang skip...`)] }).catch(() => { });
+    
+    // Fallback logic: If YouTube fails, try SoundCloud
+    if (track.info.sourceName === "youtube") {
+        console.log(`[${INSTANCE_ID}] [PLAYBACK-FALLBACK] YouTube failed at runtime, trying SoundCloud for: ${track.info.title}`);
+        
+        try {
+            const res = await player.search({ query: `scsearch:${track.info.title}` }, track.userData?.requester);
+            if (res && res.tracks?.length > 0) {
+                const scTrack = res.tracks[0];
+                if (channel) channel.send({ 
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xED4245)
+                        .setDescription(`⚠️ YouTube bị chặn link này. Đang tự động chuyển sang bản **SoundCloud** dự phòng...\n🎶 **${scTrack.info.title}**`)] 
+                }).catch(() => { });
+                
+                // Play the soundcloud version immediately
+                return await player.play({ track: scTrack });
+            }
+        } catch (e) {
+            console.error(`[${INSTANCE_ID}] [FALLBACK-CRASH] SoundCloud fallback search failed:`, e.message);
+        }
+    }
+
+    if (channel) channel.send({ 
+        embeds: [new EmbedBuilder()
+            .setColor(0xED4245)
+            .setDescription(`❌ Lỗi phát: **${track.info.title}**\nChi tiết: \`${payload.exception?.message?.split("\n")[0] || payload.error || "Unknown Error"}\` — đang skip...`)] 
+    }).catch(() => { });
+
     if (player.queue.tracks.length > 0) {
         player.skip();
     } else {

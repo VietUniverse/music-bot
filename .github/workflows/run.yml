@@ -47,4 +47,4 @@ jobs:
         run: sleep 10
 
       - name: Start Bot
-        run: node --max-old-space-size=1024 bot.js
+        run: node --max-old-space-size=1024 --dns-result-order=ipv4first bot.js

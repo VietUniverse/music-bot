@@ -311,36 +311,37 @@ client.on("interactionCreate", async (interaction) => {
             await player.connect({ channelId: voiceChannel.id });
         }
 
-        let finalQuery = query;
-
-        // Bypass IP-blocking by routing ALL YouTube queries to SoundCloud.
-        try {
-            if (query.includes("youtube.com") || query.includes("youtu.be")) {
-                // If the user pasted a direct YouTube link, we extract the title via oEmbed
-                // and search for that title natively purely on SoundCloud.
-                const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(query)}&format=json`;
-                const res = await fetch(oembedUrl);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.title) {
-                        finalQuery = `scsearch:${data.title}`;
-                    } else {
-                        finalQuery = `scsearch:${query}`;
-                    }
-                } else {
-                    // Cannot fetch title, ignore link entirely to prevent proxy-close loop
-                    return interaction.editReply({ content: "❌ Do chống bot YouTube gắt gao, hãy tự gõ **Tên Bài Hát** thay vì gửi link nhé!" });
+        // YouTube-First with SoundCloud Fallback logic
+        async function robustSearch(q, type = "youtube") {
+            try {
+                const searchType = type === "youtube" ? "ytsearch:" : "scsearch:";
+                // If it's a URL, search exactly as is, otherwise prefix with search type
+                const searchParams = q.startsWith("http") ? q : `${searchType}${q}`;
+                
+                console.log(`[SEARCH] Trying ${type} for: ${q}`);
+                const res = await player.search({ query: searchParams }, interaction.user);
+                
+                if (res && res.tracks?.length > 0) {
+                    return res;
                 }
-            } else if (!query.startsWith("http")) { 
-                // Any normal text search bypasses YouTube and goes directly to SoundCloud
-                finalQuery = `scsearch:${query}`;
+                
+                // Fallback to SoundCloud if YouTube failed
+                if (type === "youtube") {
+                    console.log(`[FALLBACK] YouTube failed or empty, trying SoundCloud for: ${q}`);
+                    return await robustSearch(q, "soundcloud");
+                }
+                
+                return null;
+            } catch (err) {
+                console.error(`[SEARCH ERROR] ${type} failed:`, err.message);
+                if (type === "youtube") {
+                    return await robustSearch(q, "soundcloud");
+                }
+                return null;
             }
-        } catch (e) {
-            console.error("URL parsing failed:", e);
-            finalQuery = `scsearch:${query}`;
         }
 
-        const result = await player.search({ query: finalQuery }, interaction.user);
+        const result = await robustSearch(query);
 
         if (!result || !result.tracks?.length) {
             return interaction.editReply({ content: "❌ Không tìm thấy bài hát trên hệ thống dự phòng!" });

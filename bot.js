@@ -22,7 +22,6 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const priorityNodes = [
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "youshallnotpass", host: "localhost", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity }
 ];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);

@@ -30,20 +30,5 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Download Lavalink
-        run: wget https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar
-
-      - name: Start Lavalink
-        run: java -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true -jar Lavalink.jar &
-
-      - name: Wait for Lavalink
-        run: sleep 10
-
       - name: Start Bot
         run: node --max-old-space-size=1024 bot.js

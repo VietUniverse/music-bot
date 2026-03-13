@@ -24,11 +24,17 @@ const client = new Client({
 });
 
 // ─── Lavalink Manager ──────────────────────────────────────────
-const priorityNodes = [
-    { authorization: "youshallnotpass", host: "127.0.0.1", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
+const publicNodes = [
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lava.vulk.moe", port: 443, secure: true, id: "vulk-moe", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lavalink.lexis.host", port: 443, secure: true, id: "lexis-host", retryDelay: 5000, retryAmount: Infinity }
 ];
-console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
+
+// Distributed Priority based on BOT_NODE_INDEX if provided, otherwise default rotation
+const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
+const priorityNodes = [...publicNodes.slice(nodeIndex % publicNodes.length), ...publicNodes.slice(0, nodeIndex % publicNodes.length)];
+
+console.log(`[BOT] Prioritizing node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
 client.lavalink = new LavalinkManager({
     nodes: priorityNodes,
@@ -63,6 +69,7 @@ const commands = [
                 { name: "🔁 Lặp cả queue", value: "queue" },
             )),
     new SlashCommandBuilder().setName("replay").setDescription("⏪ Phát lại bài hiện tại từ đầu"),
+    new SlashCommandBuilder().setName("debug").setDescription("🔍 Kiểm tra trạng thái kết nối & Node"),
 ];
 
 // ─── Helper Functions ──────────────────────────────────────────
@@ -385,6 +392,30 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply({
             embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("⏹ Đã dừng phát nhạc và rời voice channel.")],
         });
+    }
+
+    // ── /debug ──
+    else if (commandName === "debug") {
+        const player = client.lavalink.getPlayer(guild.id);
+        if (!player) {
+            return interaction.reply({ content: "❌ Không có player nào đang hoạt động trong server này!", ephemeral: true });
+        }
+
+        const node = player.node;
+        const msg = [
+            `🔍 **Bot Debug Info**`,
+            `🆔 **Instance:** \`${INSTANCE_ID}\``,
+            `🌐 **Node:** \`${node?.id || "Unknown"}\` (${node?.host})`,
+            `📡 **Node Status:** ${node?.connected ? "✅ Connected" : "❌ Disconnected"}`,
+            `📊 **Node Ping:** \`${node?.ping}ms\``,
+            `🎵 **Playing:** ${player.playing ? "▶ Yes" : "⏸ No"} (Paused: ${player.paused})`,
+            `🔊 **Volume:** \`${player.volume}%\``,
+            `🔗 **Connected to Voice:** ${player.voiceChannelId ? "✅ <#" + player.voiceChannelId + ">" : "❌ No"}`,
+            `📝 **Text Channel:** <#${player.textChannelId}>`,
+            player.queue.current ? `🎶 **Current Track:** [${player.queue.current.info.title}](${player.queue.current.info.uri})` : `📭 **Queue:** Empty`,
+        ].join("\n");
+
+        await interaction.reply({ content: msg, ephemeral: true });
     }
 
     // ── /queue ──

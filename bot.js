@@ -4,6 +4,9 @@ const { LavalinkManager } = require("lavalink-client");
 // ─── Config ────────────────────────────────────────────────────
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const LAVALINK_PASSWORD = process.env.LAVALINK_PASSWORD || "youshallnotpass";
+const INSTANCE_ID = Math.random().toString(36).substring(7).toUpperCase();
+
+console.log(`[BOT] Instance ID: ${INSTANCE_ID}`);
 
 if (!DISCORD_TOKEN) {
     console.error("❌ DISCORD_TOKEN is required!");
@@ -22,9 +25,9 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const priorityNodes = [
-    { authorization: "youshallnotpass", host: "127.0.0.1", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lava.vulk.moe", port: 443, secure: true, id: "vulk-moe", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "lexishostlavalink", host: "lavalink.lexis.host", port: 443, secure: true, id: "lexishost", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "youshallnotpass", host: "127.0.0.1", port: 2333, secure: false, id: "localhost-action", retryDelay: 5000, retryAmount: Infinity }
 ];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
@@ -166,10 +169,10 @@ client.lavalink.on("playerCreate", (player) => {
 });
 client.lavalink.on("playerDestroy", (player) => console.log(`🔴 Player Destroyed for ${player.guildId}`));
 
-// Debug Voice Connection state
 client.lavalink.on("playerUpdate", (player) => {
+    console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${player.node.id}, Connected: ${player.connected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
     if (player.connected && !player.playing && player.queue.current) {
-        console.log(`⚠️ Player stuck on ${player.guildId} [Node: ${player.node.id}] - Connected but not playing! State:`, player.state);
+        console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
     }
 });
 
@@ -177,6 +180,12 @@ process.on("unhandledRejection", (reason) => console.error("❌ Unhandled Reject
 process.on("uncaughtException", (err) => console.error("❌ Uncaught Exception:", err));
 client.lavalink.on("trackStart", (player, track) => {
     const channel = client.channels.cache.get(player.textChannelId);
+    console.log(`🔊 [${INSTANCE_ID}] Track Start: ${track.info.title} on node: ${player.node.id}`);
+    
+    // Force audio state to ensure it's not silent
+    player.setVolume(100);
+    if (player.paused) player.resume();
+
     if (channel) {
         channel.send({ embeds: [trackEmbed(track, "🎵 Đang phát")] }).catch(() => { });
     }

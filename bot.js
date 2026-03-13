@@ -21,6 +21,14 @@ const client = new Client({
 });
 
 // ─── Lavalink Manager ──────────────────────────────────────────
+const allNodes = [
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava.millohost.my.id", port: 443, secure: true, id: "millohost2", retryDelay: 5000, retryAmount: Infinity }
+];
+const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
+// Rotate nodes so each bot prefers a different node
+const rotatedNodes = [...allNodes.slice(nodeIndex), ...allNodes.slice(0, nodeIndex)];
+
 const localNode = {
     authorization: "youshallnotpass",
     host: "localhost",
@@ -31,9 +39,7 @@ const localNode = {
     retryAmount: Infinity
 };
 
-// We rely entirely on the local Lavalink node running within the GitHub Action.
-// Public nodes (serenetia, ajieblogs) cause `proxy-close` websocket drop loops and interrupt playback.
-const priorityNodes = [localNode];
+const priorityNodes = [...rotatedNodes, localNode];
 console.log(`[BOT] Assigned to priority node ${priorityNodes[0].id} with ${priorityNodes.length - 1} fallbacks.`);
 
 client.lavalink = new LavalinkManager({

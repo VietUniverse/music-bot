@@ -40,7 +40,7 @@ jobs:
         run: wget https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar
 
       - name: Start Lavalink
-        run: java -jar Lavalink.jar &
+        run: java -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true -jar Lavalink.jar &
 
       - name: Wait for Lavalink
         run: sleep 10

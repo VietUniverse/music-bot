@@ -25,11 +25,10 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
-    { authorization: "youshallnotpass", host: "lavalink.lexis.host", port: 443, secure: true, id: "lexis-host", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "naig.is-a.dev", host: "lavahatry4.techbyte.host", port: 3000, secure: false, id: "hatry4", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 13592, secure: false, id: "jirayu-proxy", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "lavalinklol", host: "lava.g3v.co.uk", port: 9008, secure: false, id: "g3v", retryDelay: 5000, retryAmount: Infinity }
 ];
-
-// Distributed Priority based on BOT_NODE_INDEX if provided, otherwise default rotation
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
 // We'll filter out the 502 node from being first if possible, but keep the list as fallbacks
 const sortedNodes = [...publicNodes];

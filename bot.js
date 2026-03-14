@@ -26,7 +26,7 @@ const client = new Client({
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
     { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 443, secure: true, id: "jirayu", retryDelay: 5000, retryAmount: Infinity },
+
     { authorization: "https://seretia.link/discord", host: "lavalinkv4.serenetia.com", port: 80, secure: false, id: "serenetia", retryDelay: 5000, retryAmount: Infinity }
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;

@@ -183,7 +183,7 @@ client.lavalink.on("playerUpdate", (player) => {
     if (isConnected && !player.playing && player.queue.current) {
         console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
         
-        // Failsafe: Only destroy truly DISCONNECTED zombie players (not buffering tracks with undefined state)
+        // Failsafe: Only destroy truly DISCONNECTED zombie players
         if (player.state === "DISCONNECTED") {
             console.log(`🧨 [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
             const channel = client.channels.cache.get(player.textChannelId);

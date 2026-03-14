@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, EmbedBuilder, REST, Routes, SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { LavalinkManager } = require("lavalink-client");
 
-// ─── Config ────────────────────────────────────────────────────
+// â”€â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const LAVALINK_PASSWORD = process.env.LAVALINK_PASSWORD || "youshallnotpass";
 const INSTANCE_ID = Math.random().toString(36).substring(7).toUpperCase();
@@ -9,11 +9,11 @@ const INSTANCE_ID = Math.random().toString(36).substring(7).toUpperCase();
 console.log(`[BOT] Instance ID: ${INSTANCE_ID}`);
 
 if (!DISCORD_TOKEN) {
-    console.error("❌ DISCORD_TOKEN is required!");
+    console.error("âŒ DISCORD_TOKEN is required!");
     process.exit(1);
 }
 
-// ─── Discord Client ────────────────────────────────────────────
+// â”€â”€â”€ Discord Client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -23,7 +23,7 @@ const client = new Client({
     ],
 });
 
-// ─── Lavalink Manager ──────────────────────────────────────────
+// â”€â”€â”€ Lavalink Manager â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const publicNodes = [
     { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
 
@@ -52,30 +52,30 @@ client.lavalink = new LavalinkManager({
 client.on("raw", (d) => client.lavalink.sendRawData(d));
 
 const commands = [
-    new SlashCommandBuilder().setName("play").setDescription("🎵 Phát nhạc từ YouTube/SoundCloud/URL")
-        .addStringOption(o => o.setName("query").setDescription("Tên bài hát hoặc URL").setRequired(true)),
-    new SlashCommandBuilder().setName("skip").setDescription("⏭ Bỏ qua bài hiện tại"),
-    new SlashCommandBuilder().setName("stop").setDescription("⏹ Dừng phát & rời voice channel"),
-    new SlashCommandBuilder().setName("queue").setDescription("📜 Xem danh sách phát"),
-    new SlashCommandBuilder().setName("nowplaying").setDescription("🎶 Bài đang phát"),
-    new SlashCommandBuilder().setName("pause").setDescription("⏸ Tạm dừng"),
-    new SlashCommandBuilder().setName("resume").setDescription("▶ Tiếp tục phát"),
-    new SlashCommandBuilder().setName("volume").setDescription("🔊 Chỉnh âm lượng")
-        .addIntegerOption(o => o.setName("level").setDescription("Âm lượng (1-150)").setRequired(true).setMinValue(1).setMaxValue(150)),
-    new SlashCommandBuilder().setName("loop").setDescription("🔁 Lặp lại bài hát / queue")
-        .addStringOption(o => o.setName("mode").setDescription("Chế độ lặp").setRequired(true)
+    new SlashCommandBuilder().setName("play").setDescription("ðŸŽµ PhÃ¡t nháº¡c tá»« YouTube/SoundCloud/URL")
+        .addStringOption(o => o.setName("query").setDescription("TÃªn bÃ i hÃ¡t hoáº·c URL").setRequired(true)),
+    new SlashCommandBuilder().setName("skip").setDescription("â­ Bá» qua bÃ i hiá»‡n táº¡i"),
+    new SlashCommandBuilder().setName("stop").setDescription("â¹ Dá»«ng phÃ¡t & rá»i voice channel"),
+    new SlashCommandBuilder().setName("queue").setDescription("ðŸ“œ Xem danh sÃ¡ch phÃ¡t"),
+    new SlashCommandBuilder().setName("nowplaying").setDescription("ðŸŽ¶ BÃ i Ä‘ang phÃ¡t"),
+    new SlashCommandBuilder().setName("pause").setDescription("â¸ Táº¡m dá»«ng"),
+    new SlashCommandBuilder().setName("resume").setDescription("â–¶ Tiáº¿p tá»¥c phÃ¡t"),
+    new SlashCommandBuilder().setName("volume").setDescription("ðŸ”Š Chá»‰nh Ã¢m lÆ°á»£ng")
+        .addIntegerOption(o => o.setName("level").setDescription("Ã‚m lÆ°á»£ng (1-150)").setRequired(true).setMinValue(1).setMaxValue(150)),
+    new SlashCommandBuilder().setName("loop").setDescription("ðŸ” Láº·p láº¡i bÃ i hÃ¡t / queue")
+        .addStringOption(o => o.setName("mode").setDescription("Cháº¿ Ä‘á»™ láº·p").setRequired(true)
             .addChoices(
-                { name: "❌ Tắt lặp", value: "off" },
-                { name: "🔂 Lặp bài hiện tại", value: "track" },
-                { name: "🔁 Lặp cả queue", value: "queue" },
+                { name: "âŒ Táº¯t láº·p", value: "off" },
+                { name: "ðŸ”‚ Láº·p bÃ i hiá»‡n táº¡i", value: "track" },
+                { name: "ðŸ” Láº·p cáº£ queue", value: "queue" },
             )),
-    new SlashCommandBuilder().setName("replay").setDescription("⏪ Phát lại bài hiện tại từ đầu"),
-    new SlashCommandBuilder().setName("debug").setDescription("🔍 Kiểm tra trạng thái kết nối & Node"),
+    new SlashCommandBuilder().setName("replay").setDescription("âª PhÃ¡t láº¡i bÃ i hiá»‡n táº¡i tá»« Ä‘áº§u"),
+    new SlashCommandBuilder().setName("debug").setDescription("ðŸ” Kiá»ƒm tra tráº¡ng thÃ¡i káº¿t ná»‘i & Node"),
 ];
 
-// ─── Helper Functions ──────────────────────────────────────────
+// â”€â”€â”€ Helper Functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function formatDuration(ms) {
-    if (!ms || ms === 0) return "🔴 LIVE";
+    if (!ms || ms === 0) return "ðŸ”´ LIVE";
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
     const h = Math.floor(m / 60);
@@ -83,47 +83,47 @@ function formatDuration(ms) {
     return `${m}:${String(s % 60).padStart(2, "0")}`;
 }
 
-function trackEmbed(track, title = "🎵 Đang phát") {
+function trackEmbed(track, title = "ðŸŽµ Äang phÃ¡t") {
     const embed = new EmbedBuilder()
         .setColor(0x5865F2)
         .setTitle(title)
         .setDescription(`**[${track.info.title}](${track.info.uri})**`)
         .addFields(
-            { name: "👤 Nghệ sĩ", value: track.info.author || "Unknown", inline: true },
-            { name: "⏱ Thời lượng", value: formatDuration(track.info.duration), inline: true },
+            { name: "ðŸ‘¤ Nghá»‡ sÄ©", value: track.info.author || "Unknown", inline: true },
+            { name: "â± Thá»i lÆ°á»£ng", value: formatDuration(track.info.duration), inline: true },
         );
     if (track.info.artworkUrl) embed.setThumbnail(track.info.artworkUrl);
-    if (track.requester) embed.setFooter({ text: `Yêu cầu bởi ${track.requester.username}` });
+    if (track.requester) embed.setFooter({ text: `YÃªu cáº§u bá»Ÿi ${track.requester.username}` });
     return embed;
 }
 
-// ─── Register Slash Commands ───────────────────────────────────
+// â”€â”€â”€ Register Slash Commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function registerCommands() {
     const rest = new REST({ version: "10" }).setToken(DISCORD_TOKEN);
     try {
-        console.log("📝 Đang đăng ký slash commands...");
+        console.log("ðŸ“ Äang Ä‘Äƒng kÃ½ slash commands...");
         await rest.put(Routes.applicationCommands(client.user.id), {
             body: commands.map(c => c.toJSON()),
         });
-        console.log("✅ Đã đăng ký slash commands!");
+        console.log("âœ… ÄÃ£ Ä‘Äƒng kÃ½ slash commands!");
     } catch (err) {
-        console.error("❌ Lỗi đăng ký commands:", err);
+        console.error("âŒ Lá»—i Ä‘Äƒng kÃ½ commands:", err);
     }
 }
 
-// ─── Bot Ready ─────────────────────────────────────────────────
+// â”€â”€â”€ Bot Ready â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 client.once("ready", async () => {
-    console.log(`🤖 Bot online: ${client.user.tag}`);
+    console.log(`ðŸ¤– Bot online: ${client.user.tag}`);
     client.lavalink.options.client.id = client.user.id;
     try {
         await client.lavalink.init({ id: client.user.id, username: client.user.username });
     } catch (e) {
-        console.error("❌ Lỗi khởi tạo Lavalink:", e);
+        console.error("âŒ Lá»—i khá»Ÿi táº¡o Lavalink:", e);
     }
     await registerCommands();
 });
 
-// ─── Auto-leave when voice channel is empty ─────────────────
+// â”€â”€â”€ Auto-leave when voice channel is empty â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const emptyTimers = new Map();
 
 client.on("voiceStateUpdate", (oldState, newState) => {
@@ -143,7 +143,7 @@ client.on("voiceStateUpdate", (oldState, newState) => {
         if (!emptyTimers.has(guildId)) {
             const timer = setTimeout(() => {
                 const ch = client.channels.cache.get(player.textChannelId);
-                if (ch) ch.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("👋 Không còn ai trong voice channel \u2014 đã rời!")] }).catch(() => { });
+                if (ch) ch.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("ðŸ‘‹ KhÃ´ng cÃ²n ai trong voice channel \u2014 Ä‘Ã£ rá»i!")] }).catch(() => { });
                 player.destroy();
                 emptyTimers.delete(guildId);
             }, 30000);
@@ -158,37 +158,37 @@ client.on("voiceStateUpdate", (oldState, newState) => {
     }
 });
 
-// ─── Lavalink Events ──────────────────────────────────────────
+// â”€â”€â”€ Lavalink Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 client.lavalink.nodeManager.on("error", (node, error) => {
-    console.error(`❌ Lavalink Node ${node.id} Error: ${error.message}`);
+    console.error(`âŒ Lavalink Node ${node.id} Error: ${error.message}`);
 });
 
 client.lavalink.nodeManager.on("connect", (node) => {
-    console.log(`✅ Lavalink Node ${node.id} Connected!`);
+    console.log(`âœ… Lavalink Node ${node.id} Connected!`);
 });
 
 client.lavalink.nodeManager.on("disconnect", (node, reason) => {
-    console.log(`❌ Lavalink Node ${node.id} Disconnected:`, reason);
+    console.log(`âŒ Lavalink Node ${node.id} Disconnected:`, reason);
 });
 
 client.lavalink.on("playerCreate", (player) => {
-    console.log(`🟡 Player Created for ${player.guildId} on node: ${player.node?.id || "unknown"}`);
+    console.log(`ðŸŸ¡ Player Created for ${player.guildId} on node: ${player.node?.id || "unknown"}`);
 });
-client.lavalink.on("playerDestroy", (player) => console.log(`🔴 Player Destroyed for ${player.guildId}`));
+client.lavalink.on("playerDestroy", (player) => console.log(`ðŸ”´ Player Destroyed for ${player.guildId}`));
 
 client.lavalink.on("playerUpdate", (player) => {
     // In v2, player.node exists but might be accessed differently in updates
     const nodeId = player.node?.id || player.nodeId || "unknown";
     const isConnected = !!player.voiceChannelId;
-    console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${nodeId}, Connected: ${isConnected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
+    console.log(`ðŸ”¹ [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${nodeId}, Connected: ${isConnected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
     if (isConnected && !player.playing && player.queue.current) {
-        console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
+        console.log(`âš ï¸ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
         
         // Failsafe: If player gets stuck in an undefined/zombie state due to node drops, destroy it.
         if (player.state === "DISCONNECTED") {
-            console.log(`🧨 [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
+            console.log(`ðŸ§¨ [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
             const channel = client.channels.cache.get(player.textChannelId);
-            if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("⚠️ Mất kết nối tới máy chủ nhạc (Zombie Player). Đang dọn dẹp... Vui lòng gọi lại bot!")] }).catch(() => { });
+            if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("âš ï¸ Máº¥t káº¿t ná»‘i tá»›i mÃ¡y chá»§ nháº¡c (Zombie Player). Äang dá»n dáº¹p... Vui lÃ²ng gá»i láº¡i bot!")] }).catch(() => { });
             const realPlayer = client.lavalink.getPlayer(player.guildId);
             if (realPlayer) realPlayer.destroy();
 
@@ -196,34 +196,55 @@ client.lavalink.on("playerUpdate", (player) => {
     }
 });
 
-process.on("unhandledRejection", (reason) => console.error("❌ Unhandled Rejection:", reason));
-process.on("uncaughtException", (err) => console.error("❌ Uncaught Exception:", err));
+process.on("unhandledRejection", (reason) => console.error("âŒ Unhandled Rejection:", reason));
+process.on("uncaughtException", (err) => console.error("âŒ Uncaught Exception:", err));
 client.lavalink.on("trackStart", (player, track) => {
     const channel = client.channels.cache.get(player.textChannelId);
-    console.log(`🔊 [${INSTANCE_ID}] Track Start: ${track.info.title} on node: ${player.node?.id || "unknown"}`);
+    console.log(`ðŸ”Š [${INSTANCE_ID}] Track Start: ${track.info.title} on node: ${player.node?.id || "unknown"}`);
     
     // Force audio state to ensure it's not silent
     player.setVolume(100);
     if (player.paused) player.resume();
 
     if (channel) {
-        channel.send({ embeds: [trackEmbed(track, "🎵 Đang phát")] }).catch(() => { });
+        channel.send({ embeds: [trackEmbed(track, "ðŸŽµ Äang phÃ¡t")] }).catch(() => { });
     }
 });
 
 client.lavalink.on("queueEnd", (player) => {
     const channel = client.channels.cache.get(player.textChannelId);
     if (channel) {
-        channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("📭 Hết nhạc trong queue — sẽ rời voice channel sau 3 phút.")] }).catch(() => { });
+        channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("ðŸ“­ Háº¿t nháº¡c trong queue â€” sáº½ rá»i voice channel sau 3 phÃºt.")] }).catch(() => { });
     }
     setTimeout(() => {
         if (!player.playing) player.destroy();
     }, 180000);
 });
 
-client.lavalink.on("trackStuck", (player, track) => {
+client.lavalink.on("trackStuck", async (player, track) => {
+    console.error(`âš ï¸ [${INSTANCE_ID}] Track STUCK: ${track.info.title} (source: ${track.info.sourceName})`);
     const channel = client.channels.cache.get(player.textChannelId);
-    if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription(`⚠️ Track bị stuck: **${track.info.title}** — đang skip...`)] }).catch(() => { });
+
+    // Fallback: If a YouTube track gets stuck, try SoundCloud
+    if (track.info.sourceName === "youtube") {
+        console.log(`[${INSTANCE_ID}] [STUCK-FALLBACK] YouTube track stuck, trying SoundCloud for: ${track.info.title}`);
+        try {
+            const res = await player.search({ query: `scsearch:${track.info.title}` }, track.userData?.requester);
+            if (res && res.tracks?.length > 0) {
+                const scTrack = res.tracks[0];
+                if (channel) channel.send({
+                    embeds: [new EmbedBuilder()
+                        .setColor(0xFEE75C)
+                        .setDescription(`âš ï¸ YouTube bá»‹ káº¹t luá»“ng. Äang tá»± Ä‘á»™ng chuyá»ƒn sang **SoundCloud** dá»± phÃ²ng...\nðŸŽ¶ **${scTrack.info.title}**`)]
+                }).catch(() => { });
+                return await player.play({ track: scTrack });
+            }
+        } catch (e) {
+            console.error(`[${INSTANCE_ID}] [STUCK-FALLBACK-CRASH] SoundCloud fallback failed:`, e.message);
+        }
+    }
+
+    if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription(`âš ï¸ Track bá»‹ stuck: **${track.info.title}** â€” Ä‘ang skip...`)] }).catch(() => { });
     if (player.queue.tracks.length > 0) {
         player.skip();
     } else {
@@ -232,7 +253,7 @@ client.lavalink.on("trackStuck", (player, track) => {
 });
 
 client.lavalink.on("trackError", async (player, track, payload) => {
-    console.error(`❌ [${INSTANCE_ID}] Lavalink Track Error for ${track.info.title}:`, payload.exception?.message || payload.error || payload);
+    console.error(`âŒ [${INSTANCE_ID}] Lavalink Track Error for ${track.info.title}:`, payload.exception?.message || payload.error || payload);
     
     const channel = client.channels.cache.get(player.textChannelId);
     
@@ -247,7 +268,7 @@ client.lavalink.on("trackError", async (player, track, payload) => {
                 if (channel) channel.send({ 
                     embeds: [new EmbedBuilder()
                         .setColor(0xED4245)
-                        .setDescription(`⚠️ YouTube bị chặn link này. Đang tự động chuyển sang bản **SoundCloud** dự phòng...\n🎶 **${scTrack.info.title}**`)] 
+                        .setDescription(`âš ï¸ YouTube bá»‹ cháº·n link nÃ y. Äang tá»± Ä‘á»™ng chuyá»ƒn sang báº£n **SoundCloud** dá»± phÃ²ng...\nðŸŽ¶ **${scTrack.info.title}**`)] 
                 }).catch(() => { });
                 
                 // Play the soundcloud version immediately
@@ -261,7 +282,7 @@ client.lavalink.on("trackError", async (player, track, payload) => {
     if (channel) channel.send({ 
         embeds: [new EmbedBuilder()
             .setColor(0xED4245)
-            .setDescription(`❌ Lỗi phát: **${track.info.title}**\nChi tiết: \`${payload.exception?.message?.split("\n")[0] || payload.error || "Unknown Error"}\` — đang skip...`)] 
+            .setDescription(`âŒ Lá»—i phÃ¡t: **${track.info.title}**\nChi tiáº¿t: \`${payload.exception?.message?.split("\n")[0] || payload.error || "Unknown Error"}\` â€” Ä‘ang skip...`)] 
     }).catch(() => { });
 
     if (player.queue.tracks.length > 0) {
@@ -271,26 +292,26 @@ client.lavalink.on("trackError", async (player, track, payload) => {
     }
 });
 
-// ─── Interaction Handler ───────────────────────────────────────
+// â”€â”€â”€ Interaction Handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     const { commandName, channel, guildId } = interaction;
 
     if (!guildId) {
-        return interaction.reply({ content: "❌ Các lệnh nhạc chỉ có thể dùng trong server!", ephemeral: true });
+        return interaction.reply({ content: "âŒ CÃ¡c lá»‡nh nháº¡c chá»‰ cÃ³ thá»ƒ dÃ¹ng trong server!", ephemeral: true });
     }
 
     let guild = interaction.guild;
 
-    // Nếu không lấy được guild (bot chưa được add vào server mà dùng bằng User App)
+    // Náº¿u khÃ´ng láº¥y Ä‘Æ°á»£c guild (bot chÆ°a Ä‘Æ°á»£c add vÃ o server mÃ  dÃ¹ng báº±ng User App)
     if (!guild) {
         try {
             guild = await client.guilds.fetch(guildId);
         } catch (e) {
-            console.error("❌ Error fetching guild:", e);
+            console.error("âŒ Error fetching guild:", e);
             return interaction.reply({
-                content: "❌ **Lỗi:** Bot chưa tham gia Server này!\n\nBạn đang dùng lệnh qua tính năng User App (ứng dụng cài vào cá nhân), nhưng để bot vào **Voice Channel** hát thì bot BẮT BUỘC phải được Add trực tiếp vào Server này.\n\n👉 Vui lòng gửi link mời bot cho Admin Server để họ thêm vào nhé!",
+                content: "âŒ **Lá»—i:** Bot chÆ°a tham gia Server nÃ y!\n\nBáº¡n Ä‘ang dÃ¹ng lá»‡nh qua tÃ­nh nÄƒng User App (á»©ng dá»¥ng cÃ i vÃ o cÃ¡ nhÃ¢n), nhÆ°ng Ä‘á»ƒ bot vÃ o **Voice Channel** hÃ¡t thÃ¬ bot Báº®T BUá»˜C pháº£i Ä‘Æ°á»£c Add trá»±c tiáº¿p vÃ o Server nÃ y.\n\nðŸ‘‰ Vui lÃ²ng gá»­i link má»i bot cho Admin Server Ä‘á»ƒ há» thÃªm vÃ o nhÃ©!",
                 ephemeral: true
             });
         }
@@ -301,16 +322,16 @@ client.on("interactionCreate", async (interaction) => {
         try {
             member = await guild.members.fetch(interaction.user.id);
         } catch (e) {
-            console.error("❌ Error fetching member:", e);
-            return interaction.reply({ content: "❌ Lỗi: Không thể lấy thông tin Voice của bạn (thử gõ lại lệnh nhé)!", ephemeral: true });
+            console.error("âŒ Error fetching member:", e);
+            return interaction.reply({ content: "âŒ Lá»—i: KhÃ´ng thá»ƒ láº¥y thÃ´ng tin Voice cá»§a báº¡n (thá»­ gÃµ láº¡i lá»‡nh nhÃ©)!", ephemeral: true });
         }
     }
 
-    // ── /play ──
+    // â”€â”€ /play â”€â”€
     if (commandName === "play") {
         let voiceChannel = member?.voice?.channel;
 
-        // Bắt buộc fetch member nếu cache rỗng (hay gặp ở Text-in-Voice)
+        // Báº¯t buá»™c fetch member náº¿u cache rá»—ng (hay gáº·p á»Ÿ Text-in-Voice)
         if (!voiceChannel) {
             try {
                 const fetchedMember = await guild.members.fetch(interaction.user.id);
@@ -321,7 +342,7 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         if (!voiceChannel) {
-            return interaction.reply({ content: "❌ Bạn cần vào voice channel trước!", ephemeral: true });
+            return interaction.reply({ content: "âŒ Báº¡n cáº§n vÃ o voice channel trÆ°á»›c!", ephemeral: true });
         }
 
         await interaction.deferReply();
@@ -359,7 +380,7 @@ client.on("interactionCreate", async (interaction) => {
                     finalQuery = query;
                 } else {
                     // Cannot fetch title, ignore link entirely to prevent proxy-close loop
-                    return interaction.editReply({ content: "❌ Do chống bot YouTube gắt gao, hãy tự gõ **Tên Bài Hát** thay vì gửi link nhé!" });
+                    return interaction.editReply({ content: "âŒ Do chá»‘ng bot YouTube gáº¯t gao, hÃ£y tá»± gÃµ **TÃªn BÃ i HÃ¡t** thay vÃ¬ gá»­i link nhÃ©!" });
                 }
             } else if (!query.startsWith("http")) { 
                 // Any normal text search bypasses YouTube and goes directly to SoundCloud
@@ -404,7 +425,7 @@ client.on("interactionCreate", async (interaction) => {
         const result = await robustSearch(query);
 
         if (!result || !result.tracks?.length) {
-            return interaction.editReply({ content: "❌ Không tìm thấy bài hát trên hệ thống dự phòng!" });
+            return interaction.editReply({ content: "âŒ KhÃ´ng tÃ¬m tháº¥y bÃ i hÃ¡t trÃªn há»‡ thá»‘ng dá»± phÃ²ng!" });
         }
 
         // We don't overwrite metadata anymore, the SoundCloud metadata is perfectly valid.
@@ -415,7 +436,7 @@ client.on("interactionCreate", async (interaction) => {
             await interaction.editReply({
                 embeds: [new EmbedBuilder()
                     .setColor(0x57F287)
-                    .setDescription(`✅ Đã thêm playlist **${result.playlist?.name || "Unknown"}** với **${result.tracks.length}** bài hát.`)]
+                    .setDescription(`âœ… ÄÃ£ thÃªm playlist **${result.playlist?.name || "Unknown"}** vá»›i **${result.tracks.length}** bÃ i hÃ¡t.`)]
             });
         } else {
             const track = result.tracks[0];
@@ -423,190 +444,190 @@ client.on("interactionCreate", async (interaction) => {
             await interaction.editReply({
                 embeds: [new EmbedBuilder()
                     .setColor(0x57F287)
-                    .setDescription(`✅ Đã thêm vào hàng đợi: [**${track.info.title}**](${track.info.uri})`)]
+                    .setDescription(`âœ… ÄÃ£ thÃªm vÃ o hÃ ng Ä‘á»£i: [**${track.info.title}**](${track.info.uri})`)]
             });
         }
 
         // Start playing if not already playing. 
         if (!player.playing) {
-            console.log(`▶ [${INSTANCE_ID}] Starting playback for: ${player.queue.current?.info?.title || "Unknown Track"}`);
+            console.log(`â–¶ [${INSTANCE_ID}] Starting playback for: ${player.queue.current?.info?.title || "Unknown Track"}`);
             await player.play();
         } else {
-            console.log(`⏳ [${INSTANCE_ID}] Track queued: ${player.queue.current?.info?.title || "Unknown Track"}`);
+            console.log(`â³ [${INSTANCE_ID}] Track queued: ${player.queue.current?.info?.title || "Unknown Track"}`);
         }
     }
 
-    // ── /skip ──
+    // â”€â”€ /skip â”€â”€
     else if (commandName === "skip") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player || !player.queue.current) {
-            return interaction.reply({ content: "❌ Không có bài nào trong hàng đợi!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i nÃ o trong hÃ ng Ä‘á»£i!", ephemeral: true });
         }
         const current = player.queue.current;
         await player.skip();
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFEE75C).setDescription(`⏭ Đã skip: **${current?.info?.title || "Unknown"}**`)],
+            embeds: [new EmbedBuilder().setColor(0xFEE75C).setDescription(`â­ ÄÃ£ skip: **${current?.info?.title || "Unknown"}**`)],
         });
     }
 
-    // ── /stop ──
+    // â”€â”€ /stop â”€â”€
     else if (commandName === "stop") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player) {
-            return interaction.reply({ content: "❌ Không có gì đang phát!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ gÃ¬ Ä‘ang phÃ¡t!", ephemeral: true });
         }
         await player.destroy();
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("⏹ Đã dừng phát nhạc và rời voice channel.")],
+            embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("â¹ ÄÃ£ dá»«ng phÃ¡t nháº¡c vÃ  rá»i voice channel.")],
         });
     }
 
-    // ── /debug ──
+    // â”€â”€ /debug â”€â”€
     else if (commandName === "debug") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player) {
-            return interaction.reply({ content: "❌ Không có player nào đang hoạt động trong server này!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ player nÃ o Ä‘ang hoáº¡t Ä‘á»™ng trong server nÃ y!", ephemeral: true });
         }
 
         const node = player.node;
         const msg = [
-            `🔍 **Bot Debug Info**`,
-            `🆔 **Instance:** \`${INSTANCE_ID}\``,
-            `🌐 **Node:** \`${node?.id || "Unknown"}\` (${node?.host})`,
-            `📡 **Node Status:** ${node?.connected ? "✅ Connected" : "❌ Disconnected"}`,
-            `📊 **Node Ping:** \`${node?.ping}ms\``,
-            `🎵 **Playing:** ${player.playing ? "▶ Yes" : "⏸ No"} (Paused: ${player.paused})`,
-            `🔊 **Volume:** \`${player.volume}%\``,
-            `🔗 **Connected to Voice:** ${player.voiceChannelId ? "✅ <#" + player.voiceChannelId + ">" : "❌ No"}`,
-            `📝 **Text Channel:** <#${player.textChannelId}>`,
-            player.queue.current ? `🎶 **Current Track:** [${player.queue.current.info.title}](${player.queue.current.info.uri})` : `📭 **Queue:** Empty`,
+            `ðŸ” **Bot Debug Info**`,
+            `ðŸ†” **Instance:** \`${INSTANCE_ID}\``,
+            `ðŸŒ **Node:** \`${node?.id || "Unknown"}\` (${node?.host})`,
+            `ðŸ“¡ **Node Status:** ${node?.connected ? "âœ… Connected" : "âŒ Disconnected"}`,
+            `ðŸ“Š **Node Ping:** \`${node?.ping}ms\``,
+            `ðŸŽµ **Playing:** ${player.playing ? "â–¶ Yes" : "â¸ No"} (Paused: ${player.paused})`,
+            `ðŸ”Š **Volume:** \`${player.volume}%\``,
+            `ðŸ”— **Connected to Voice:** ${player.voiceChannelId ? "âœ… <#" + player.voiceChannelId + ">" : "âŒ No"}`,
+            `ðŸ“ **Text Channel:** <#${player.textChannelId}>`,
+            player.queue.current ? `ðŸŽ¶ **Current Track:** [${player.queue.current.info.title}](${player.queue.current.info.uri})` : `ðŸ“­ **Queue:** Empty`,
         ].join("\n");
 
         await interaction.reply({ content: msg, ephemeral: true });
     }
 
-    // ── /queue ──
+    // â”€â”€ /queue â”€â”€
     else if (commandName === "queue") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player || !player.queue.current) {
-            return interaction.reply({ content: "❌ Queue trống!", ephemeral: true });
+            return interaction.reply({ content: "âŒ Queue trá»‘ng!", ephemeral: true });
         }
 
         const current = player.queue.current;
         const tracks = player.queue.tracks.slice(0, 15);
-        let desc = `**Đang phát:** [${current.info.title}](${current.info.uri}) \`${formatDuration(current.info.duration)}\`\n\n`;
+        let desc = `**Äang phÃ¡t:** [${current.info.title}](${current.info.uri}) \`${formatDuration(current.info.duration)}\`\n\n`;
 
         if (tracks.length > 0) {
             desc += tracks.map((t, i) => `**${i + 1}.** [${t.info.title}](${t.info.uri}) \`${formatDuration(t.info.duration)}\``).join("\n");
             if (player.queue.tracks.length > 15) {
-                desc += `\n\n... và **${player.queue.tracks.length - 15}** bài khác`;
+                desc += `\n\n... vÃ  **${player.queue.tracks.length - 15}** bÃ i khÃ¡c`;
             }
         } else {
-            desc += "*Không có bài tiếp theo trong queue.*";
+            desc += "*KhÃ´ng cÃ³ bÃ i tiáº¿p theo trong queue.*";
         }
 
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0x5865F2).setTitle("📜 Queue").setDescription(desc)
-                .setFooter({ text: `Tổng: ${player.queue.tracks.length + 1} bài` })],
+            embeds: [new EmbedBuilder().setColor(0x5865F2).setTitle("ðŸ“œ Queue").setDescription(desc)
+                .setFooter({ text: `Tá»•ng: ${player.queue.tracks.length + 1} bÃ i` })],
         });
     }
 
-    // ── /nowplaying ──
+    // â”€â”€ /nowplaying â”€â”€
     else if (commandName === "nowplaying") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player || !player.queue.current) {
-            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i Ä‘ang phÃ¡t!", ephemeral: true });
         }
         const track = player.queue.current;
         const pos = player.position;
         const dur = track.info.duration;
         const bar = createProgressBar(pos, dur);
 
-        const embed = trackEmbed(track, "🎶 Đang phát")
-            .addFields({ name: "⏱ Tiến trình", value: `${formatDuration(pos)} ${bar} ${formatDuration(dur)}`, inline: false });
+        const embed = trackEmbed(track, "ðŸŽ¶ Äang phÃ¡t")
+            .addFields({ name: "â± Tiáº¿n trÃ¬nh", value: `${formatDuration(pos)} ${bar} ${formatDuration(dur)}`, inline: false });
 
         await interaction.reply({ embeds: [embed] });
     }
 
-    // ── /pause ──
+    // â”€â”€ /pause â”€â”€
     else if (commandName === "pause") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player || !player.playing) {
-            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i Ä‘ang phÃ¡t!", ephemeral: true });
         }
         await player.pause();
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0xFEE75C).setDescription("⏸ Đã tạm dừng.")],
+            embeds: [new EmbedBuilder().setColor(0xFEE75C).setDescription("â¸ ÄÃ£ táº¡m dá»«ng.")],
         });
     }
 
-    // ── /resume ──
+    // â”€â”€ /resume â”€â”€
     else if (commandName === "resume") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player) {
-            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i Ä‘ang phÃ¡t!", ephemeral: true });
         }
         await player.resume();
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("▶ Đã tiếp tục phát.")],
+            embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("â–¶ ÄÃ£ tiáº¿p tá»¥c phÃ¡t.")],
         });
     }
 
-    // ── /volume ──
+    // â”€â”€ /volume â”€â”€
     else if (commandName === "volume") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player) {
-            return interaction.reply({ content: "❌ Không có player đang hoạt động!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ player Ä‘ang hoáº¡t Ä‘á»™ng!", ephemeral: true });
         }
         const level = interaction.options.getInteger("level");
         await player.setVolume(level);
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0x57F287).setDescription(`🔊 Âm lượng: **${level}%**`)],
+            embeds: [new EmbedBuilder().setColor(0x57F287).setDescription(`ðŸ”Š Ã‚m lÆ°á»£ng: **${level}%**`)],
         });
     }
 
-    // ── /replay ──
+    // â”€â”€ /replay â”€â”€
     else if (commandName === "replay") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player || !player.queue.current) {
-            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i Ä‘ang phÃ¡t!", ephemeral: true });
         }
         await player.seek(0);
         await interaction.reply({
-            embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("⏪ Đã phát lại bài hát từ đầu.")],
+            embeds: [new EmbedBuilder().setColor(0x5865F2).setDescription("âª ÄÃ£ phÃ¡t láº¡i bÃ i hÃ¡t tá»« Ä‘áº§u.")],
         });
     }
 
-    // ── /loop ──
+    // â”€â”€ /loop â”€â”€
     else if (commandName === "loop") {
         const player = client.lavalink.getPlayer(guild.id);
         if (!player || !player.queue.current) {
-            return interaction.reply({ content: "❌ Không có bài đang phát!", ephemeral: true });
+            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i Ä‘ang phÃ¡t!", ephemeral: true });
         }
         const mode = interaction.options.getString("mode");
         if (mode === "off") {
             player.setRepeatMode("off");
-            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("❌ Đã tắt lặp lại.")] });
+            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("âŒ ÄÃ£ táº¯t láº·p láº¡i.")] });
         } else if (mode === "track") {
             player.setRepeatMode("track");
-            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("🔂 Lặp lại **bài hiện tại** vô hạn.")] });
+            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("ðŸ”‚ Láº·p láº¡i **bÃ i hiá»‡n táº¡i** vÃ´ háº¡n.")] });
         } else if (mode === "queue") {
             player.setRepeatMode("queue");
-            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("🔁 Lặp lại **cả queue** vô hạn.")] });
+            await interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57F287).setDescription("ðŸ” Láº·p láº¡i **cáº£ queue** vÃ´ háº¡n.")] });
         }
     }
 });
 
-// ─── Progress Bar ──────────────────────────────────────────────
+// â”€â”€â”€ Progress Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function createProgressBar(current, total, length = 12) {
-    if (!total || total === 0) return "▬".repeat(length);
+    if (!total || total === 0) return "â–¬".repeat(length);
     const progress = Math.round((current / total) * length);
-    return "▬".repeat(Math.max(0, progress)) + "🔘" + "▬".repeat(Math.max(0, length - progress - 1));
+    return "â–¬".repeat(Math.max(0, progress)) + "ðŸ”˜" + "â–¬".repeat(Math.max(0, length - progress - 1));
 }
 
-// ─── Graceful Shutdown ─────────────────────────────────────────
+// â”€â”€â”€ Graceful Shutdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 async function shutdown(signal) {
-    console.log(`\n🛑 ${signal} received — shutting down...`);
+    console.log(`\nðŸ›‘ ${signal} received â€” shutting down...`);
     try {
         // Destroy all players
         for (const [, player] of client.lavalink.players) {
@@ -622,19 +643,19 @@ async function shutdown(signal) {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-// ─── Login ─────────────────────────────────────────────────────
-console.log("🚀 Starting bot...");
+// â”€â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+console.log("ðŸš€ Starting bot...");
 client.login(DISCORD_TOKEN);
 
-// ─── Global Error Handlers (Anti-Crash) ─────────────────────────────────────────
+// â”€â”€â”€ Global Error Handlers (Anti-Crash) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 process.on('unhandledRejection', (reason, promise) => {
-    console.error(`[${INSTANCE_ID}] 🧨 Unhandled Rejection:`, reason);
+    console.error(`[${INSTANCE_ID}] ðŸ§¨ Unhandled Rejection:`, reason);
     // Specifically catch Lavalink JSON parsing errors resulting from 429/502 HTML pages
     if (reason instanceof SyntaxError && reason.message.includes("is not valid JSON")) {
-        console.error(`[${INSTANCE_ID}] 🛡️ Caught Lavalink Node HTML/JSON Parsing Error. Preventing crash.`);
+        console.error(`[${INSTANCE_ID}] ðŸ›¡ï¸ Caught Lavalink Node HTML/JSON Parsing Error. Preventing crash.`);
     }
 });
 
 process.on('uncaughtException', (err) => {
-    console.error(`[${INSTANCE_ID}] 🧨 Uncaught Exception:`, err);
+    console.error(`[${INSTANCE_ID}] ðŸ§¨ Uncaught Exception:`, err);
 });

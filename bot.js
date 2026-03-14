@@ -25,7 +25,7 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
-    { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 443, secure: true, id: "jirayu", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lavalink.lexis.host", port: 443, secure: true, id: "lexis-host", retryDelay: 5000, retryAmount: Infinity },
     { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
 ];
 
@@ -184,6 +184,14 @@ client.lavalink.on("playerUpdate", (player) => {
     console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${nodeId}, Connected: ${isConnected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
     if (isConnected && !player.playing && player.queue.current) {
         console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
+        
+        // Failsafe: If player gets stuck in an undefined/zombie state due to node drops, destroy it.
+        if (player.state === undefined || player.state === "DISCONNECTED") {
+            console.log(`🧨 [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
+            const channel = client.channels.cache.get(player.textChannelId);
+            if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("⚠️ Mất kết nối tới máy chủ nhạc (Zombie Player). Đang dọn dẹp... Vui lòng gọi lại bot!")] }).catch(() => { });
+            player.destroy();
+        }
     }
 });
 

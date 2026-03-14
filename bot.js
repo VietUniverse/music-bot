@@ -25,9 +25,9 @@ const client = new Client({
 
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
-    { authorization: "naig.is-a.dev", host: "lavahatry4.techbyte.host", port: 3000, secure: false, id: "hatry4", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 13592, secure: false, id: "jirayu-proxy", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "lavalinklol", host: "lava.g3v.co.uk", port: 9008, secure: false, id: "g3v", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 443, secure: true, id: "jirayu", retryDelay: 5000, retryAmount: Infinity },
+    { authorization: "youshallnotpass", host: "lava.vulk.moe", port: 443, secure: true, id: "vulk-moe", retryDelay: 5000, retryAmount: Infinity }
 ];
 const nodeIndex = parseInt(process.env.BOT_NODE_INDEX) || 0;
 // We'll filter out the 502 node from being first if possible, but keep the list as fallbacks
@@ -623,3 +623,16 @@ process.on("SIGINT", () => shutdown("SIGINT"));
 // ─── Login ─────────────────────────────────────────────────────
 console.log("🚀 Starting bot...");
 client.login(DISCORD_TOKEN);
+
+// ─── Global Error Handlers (Anti-Crash) ─────────────────────────────────────────
+process.on('unhandledRejection', (reason, promise) => {
+    console.error(`[${INSTANCE_ID}] 🧨 Unhandled Rejection:`, reason);
+    // Specifically catch Lavalink JSON parsing errors resulting from 429/502 HTML pages
+    if (reason instanceof SyntaxError && reason.message.includes("is not valid JSON")) {
+        console.error(`[${INSTANCE_ID}] 🛡️ Caught Lavalink Node HTML/JSON Parsing Error. Preventing crash.`);
+    }
+});
+
+process.on('uncaughtException', (err) => {
+    console.error(`[${INSTANCE_ID}] 🧨 Uncaught Exception:`, err);
+});

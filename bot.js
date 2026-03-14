@@ -26,7 +26,7 @@ const client = new Client({
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
     { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 443, secure: true, id: "jirayu", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "youshallnotpass", host: "lava.vulk.moe", port: 443, secure: true, id: "vulk-moe", retryDelay: 5000, retryAmount: Infinity }
 ];
 
 // Distributed Priority based on BOT_NODE_INDEX if provided, otherwise default rotation

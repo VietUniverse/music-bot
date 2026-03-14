@@ -26,7 +26,7 @@ const client = new Client({
 // ─── Lavalink Manager ──────────────────────────────────────────
 const publicNodes = [
     { authorization: "youshallnotpass", host: "lavalink.jirayu.net", port: 443, secure: true, id: "jirayu", retryDelay: 5000, retryAmount: Infinity },
-    { authorization: "youshallnotpass", host: "lava.vulk.moe", port: 443, secure: true, id: "vulk-moe", retryDelay: 5000, retryAmount: Infinity }
+    { authorization: "https://discord.gg/mjS5J2K3ep", host: "lava-v4.millohost.my.id", port: 443, secure: true, id: "millohost", retryDelay: 5000, retryAmount: Infinity }
 ];
 
 // Distributed Priority based on BOT_NODE_INDEX if provided, otherwise default rotation
@@ -339,6 +339,28 @@ client.on("interactionCreate", async (interaction) => {
             await player.connect({ channelId: voiceChannel.id });
         }
 
+        let finalQuery = query;
+        try {
+            const url = new URL(query);
+            if (url.hostname.includes("youtube.com") || url.hostname.includes("youtu.be")) {
+                // Try to fetch title for YouTube links to check for blocks
+                const res = await player.search({ query: query }, interaction.user);
+                if (res && res.tracks?.length > 0) {
+                    // If we can get a title, it's likely not blocked or we found a workaround
+                    finalQuery = query;
+                } else {
+                    // Cannot fetch title, ignore link entirely to prevent proxy-close loop
+                    return interaction.editReply({ content: "❌ Do chống bot YouTube gắt gao, hãy tự gõ **Tên Bài Hát** thay vì gửi link nhé!" });
+                }
+            } else if (!query.startsWith("http")) { 
+                // Any normal text search bypasses YouTube and goes directly to SoundCloud
+                finalQuery = `scsearch:${query}`;
+            }
+        } catch (e) {
+            console.error("URL parsing failed:", e);
+            finalQuery = `scsearch:${query}`;
+        }
+
         // YouTube-First with SoundCloud Fallback logic
         async function robustSearch(q, type = "youtube") {
             try {
@@ -346,10 +368,11 @@ client.on("interactionCreate", async (interaction) => {
                 // If it's a URL, search exactly as is, otherwise prefix with search type
                 const searchParams = q.startsWith("http") ? q : `${searchType}${q}`;
                 
-                console.log(`[SEARCH] Trying ${type} for: ${q}`);
+                console.log(`[${INSTANCE_ID}] [SEARCH] Trying ${type} for: ${q}`);
                 const res = await player.search({ query: searchParams }, interaction.user);
                 
                 if (res && res.tracks?.length > 0) {
+                    console.log(`[${INSTANCE_ID}] [SEARCH] Found ${res.tracks.length} tracks on ${type}`);
                     return res;
                 }
                 

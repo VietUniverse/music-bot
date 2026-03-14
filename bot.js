@@ -189,7 +189,9 @@ client.lavalink.on("playerUpdate", (player) => {
             console.log(`🧨 [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
             const channel = client.channels.cache.get(player.textChannelId);
             if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("⚠️ Mất kết nối tới máy chủ nhạc (Zombie Player). Đang dọn dẹp... Vui lòng gọi lại bot!")] }).catch(() => { });
-            player.destroy();
+            const realPlayer = client.lavalink.getPlayer(player.guildId);
+            if (realPlayer) realPlayer.destroy();
+
         }
     }
 });

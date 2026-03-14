@@ -185,7 +185,7 @@ client.lavalink.on("playerUpdate", (player) => {
         console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
         
         // Failsafe: If player gets stuck in an undefined/zombie state due to node drops, destroy it.
-        if (player.state === undefined || player.state === "DISCONNECTED") {
+        if (player.state === "DISCONNECTED") {
             console.log(`🧨 [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
             const channel = client.channels.cache.get(player.textChannelId);
             if (channel) channel.send({ embeds: [new EmbedBuilder().setColor(0xED4245).setDescription("⚠️ Mất kết nối tới máy chủ nhạc (Zombie Player). Đang dọn dẹp... Vui lòng gọi lại bot!")] }).catch(() => { });

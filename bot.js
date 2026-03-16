@@ -219,6 +219,22 @@ client.lavalink.on("queueEnd", (player) => {
     }, 180000);
 });
 
+// Helper: Search across all connected nodes (for plugins not available on every node)
+async function searchAcrossNodes(query, requester) {
+    // Try all connected nodes for the search
+    const nodes = [...client.lavalink.nodeManager.nodes.values()].filter(n => n.connected);
+    for (const node of nodes) {
+        try {
+            const res = await node.search({ query }, requester);
+            if (res && res.tracks?.length > 0) return res;
+        } catch (e) {
+            // This node doesn't support this search type, try next
+            continue;
+        }
+    }
+    return null;
+}
+
 client.lavalink.on("trackStuck", async (player, track) => {
     console.error(`⚠️ [${INSTANCE_ID}] Track STUCK: ${track.info.title} (source: ${track.info.sourceName})`);
     const channel = client.channels.cache.get(player.textChannelId);
@@ -232,7 +248,7 @@ client.lavalink.on("trackStuck", async (player, track) => {
         for (const source of fallbackSources) {
             console.log(`[${INSTANCE_ID}] [STUCK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
             try {
-                const res = await player.search({ query: `${source.prefix}${track.info.title}` }, track.userData?.requester);
+                const res = await searchAcrossNodes(`${source.prefix}${track.info.title}`, track.userData?.requester);
                 if (res && res.tracks?.length > 0) {
                     const fallbackTrack = res.tracks[0];
                     if (channel) channel.send({
@@ -270,7 +286,7 @@ client.lavalink.on("trackError", async (player, track, payload) => {
         for (const source of fallbackSources) {
             console.log(`[${INSTANCE_ID}] [PLAYBACK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
             try {
-                const res = await player.search({ query: `${source.prefix}${track.info.title}` }, track.userData?.requester);
+                const res = await searchAcrossNodes(`${source.prefix}${track.info.title}`, track.userData?.requester);
                 if (res && res.tracks?.length > 0) {
                     const fallbackTrack = res.tracks[0];
                     if (channel) channel.send({ 

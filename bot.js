@@ -242,11 +242,9 @@ client.lavalink.on("trackStuck", async (player, track) => {
     console.error(`⚠️ [${INSTANCE_ID}] Track STUCK: ${track.info.title} (source: ${track.info.sourceName})`);
     const channel = client.channels.cache.get(player.textChannelId);
 
-    // Multi-tier fallback: YouTube → Deezer → SoundCloud
-    if (track.info.sourceName === "youtube" || track.info.sourceName === "soundcloud") {
-        const fallbackSources = track.info.sourceName === "youtube" 
-            ? [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "spsearch:", name: "Spotify" }, { prefix: "scsearch:", name: "SoundCloud" }]
-            : [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "spsearch:", name: "Spotify" }];
+    // Fallback: YouTube → Spotify
+    if (track.info.sourceName === "youtube") {
+        const fallbackSources = [{ prefix: "spsearch:", name: "Spotify" }];
         
         for (const source of fallbackSources) {
             console.log(`[${INSTANCE_ID}] [STUCK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
@@ -280,11 +278,9 @@ client.lavalink.on("trackError", async (player, track, payload) => {
     
     const channel = client.channels.cache.get(player.textChannelId);
     
-    // Multi-tier fallback: YouTube → Deezer → SoundCloud
-    if (track.info.sourceName === "youtube" || track.info.sourceName === "soundcloud") {
-        const fallbackSources = track.info.sourceName === "youtube"
-            ? [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "scsearch:", name: "SoundCloud" }]
-            : [{ prefix: "dzsearch:", name: "Deezer" }];
+    // Fallback: YouTube → Spotify
+    if (track.info.sourceName === "youtube") {
+        const fallbackSources = [{ prefix: "spsearch:", name: "Spotify" }];
         
         for (const source of fallbackSources) {
             console.log(`[${INSTANCE_ID}] [PLAYBACK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
@@ -414,8 +410,8 @@ client.on("interactionCreate", async (interaction) => {
             // Not a URL — treat as text search, robustSearch will try YouTube first
         }
 
-        // YouTube-First with Deezer/SoundCloud Fallback logic
-        const searchSources = ["youtube", "deezer", "spotify", "soundcloud"];
+        // YouTube-First with Spotify Fallback logic
+        const searchSources = ["youtube", "spotify"];
         async function robustSearch(q, sourceIndex = 0) {
             if (sourceIndex >= searchSources.length) return null;
             const type = searchSources[sourceIndex];

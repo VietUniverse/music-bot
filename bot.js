@@ -223,22 +223,28 @@ client.lavalink.on("trackStuck", async (player, track) => {
     console.error(`⚠️ [${INSTANCE_ID}] Track STUCK: ${track.info.title} (source: ${track.info.sourceName})`);
     const channel = client.channels.cache.get(player.textChannelId);
 
-    // Fallback: If a YouTube track gets stuck, try SoundCloud
-    if (track.info.sourceName === "youtube") {
-        console.log(`[${INSTANCE_ID}] [STUCK-FALLBACK] YouTube track stuck, trying SoundCloud for: ${track.info.title}`);
-        try {
-            const res = await player.search({ query: `scsearch:${track.info.title}` }, track.userData?.requester);
-            if (res && res.tracks?.length > 0) {
-                const scTrack = res.tracks[0];
-                if (channel) channel.send({
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xFEE75C)
-                        .setDescription(`⚠️ YouTube bị kẹt luồng. Đang tự động chuyển sang **SoundCloud** dự phòng...\n🎶 **${scTrack.info.title}**`)]
-                }).catch(() => { });
-                return await player.play({ track: scTrack });
+    // Multi-tier fallback: YouTube → Deezer → SoundCloud
+    if (track.info.sourceName === "youtube" || track.info.sourceName === "soundcloud") {
+        const fallbackSources = track.info.sourceName === "youtube" 
+            ? [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "scsearch:", name: "SoundCloud" }]
+            : [{ prefix: "dzsearch:", name: "Deezer" }];
+        
+        for (const source of fallbackSources) {
+            console.log(`[${INSTANCE_ID}] [STUCK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
+            try {
+                const res = await player.search({ query: `${source.prefix}${track.info.title}` }, track.userData?.requester);
+                if (res && res.tracks?.length > 0) {
+                    const fallbackTrack = res.tracks[0];
+                    if (channel) channel.send({
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xFEE75C)
+                            .setDescription(`⚠️ Nguồn gốc bị lỗi. Chuyển sang **${source.name}**...\n🎶 **${fallbackTrack.info.title}**`)]
+                    }).catch(() => { });
+                    return await player.play({ track: fallbackTrack });
+                }
+            } catch (e) {
+                console.error(`[${INSTANCE_ID}] [STUCK-FALLBACK] ${source.name} failed:`, e.message);
             }
-        } catch (e) {
-            console.error(`[${INSTANCE_ID}] [STUCK-FALLBACK-CRASH] SoundCloud fallback failed:`, e.message);
         }
     }
 
@@ -255,25 +261,28 @@ client.lavalink.on("trackError", async (player, track, payload) => {
     
     const channel = client.channels.cache.get(player.textChannelId);
     
-    // Fallback logic: If YouTube fails, try SoundCloud
-    if (track.info.sourceName === "youtube") {
-        console.log(`[${INSTANCE_ID}] [PLAYBACK-FALLBACK] YouTube failed at runtime, trying SoundCloud for: ${track.info.title}`);
+    // Multi-tier fallback: YouTube → Deezer → SoundCloud
+    if (track.info.sourceName === "youtube" || track.info.sourceName === "soundcloud") {
+        const fallbackSources = track.info.sourceName === "youtube"
+            ? [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "scsearch:", name: "SoundCloud" }]
+            : [{ prefix: "dzsearch:", name: "Deezer" }];
         
-        try {
-            const res = await player.search({ query: `scsearch:${track.info.title}` }, track.userData?.requester);
-            if (res && res.tracks?.length > 0) {
-                const scTrack = res.tracks[0];
-                if (channel) channel.send({ 
-                    embeds: [new EmbedBuilder()
-                        .setColor(0xED4245)
-                        .setDescription(`⚠️ YouTube bị chặn link này. Đang tự động chuyển sang bản **SoundCloud** dự phòng...\n🎶 **${scTrack.info.title}**`)] 
-                }).catch(() => { });
-                
-                // Play the soundcloud version immediately
-                return await player.play({ track: scTrack });
+        for (const source of fallbackSources) {
+            console.log(`[${INSTANCE_ID}] [PLAYBACK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
+            try {
+                const res = await player.search({ query: `${source.prefix}${track.info.title}` }, track.userData?.requester);
+                if (res && res.tracks?.length > 0) {
+                    const fallbackTrack = res.tracks[0];
+                    if (channel) channel.send({ 
+                        embeds: [new EmbedBuilder()
+                            .setColor(0xFEE75C)
+                            .setDescription(`⚠️ Nguồn gốc bị lỗi. Chuyển sang **${source.name}**...\n🎶 **${fallbackTrack.info.title}**`)] 
+                    }).catch(() => { });
+                    return await player.play({ track: fallbackTrack });
+                }
+            } catch (e) {
+                console.error(`[${INSTANCE_ID}] [FALLBACK-CRASH] ${source.name} fallback failed:`, e.message);
             }
-        } catch (e) {
-            console.error(`[${INSTANCE_ID}] [FALLBACK-CRASH] SoundCloud fallback search failed:`, e.message);
         }
     }
 
@@ -380,21 +389,20 @@ client.on("interactionCreate", async (interaction) => {
                     // Cannot fetch title, ignore link entirely to prevent proxy-close loop
                     return interaction.editReply({ content: "❌ Do chống bot YouTube gắt gao, hãy tự gõ **Tên Bài Hát** thay vì gửi link nhé!" });
                 }
-            } else if (!query.startsWith("http")) { 
-                // Any normal text search bypasses YouTube and goes directly to SoundCloud
-                finalQuery = `scsearch:${query}`;
             }
         } catch (e) {
             console.error("URL parsing failed:", e);
-            finalQuery = `scsearch:${query}`;
+            // Not a URL — treat as text search, robustSearch will try YouTube first
         }
 
-        // YouTube-First with SoundCloud Fallback logic
-        async function robustSearch(q, type = "youtube") {
+        // YouTube-First with Deezer/SoundCloud Fallback logic
+        const searchSources = ["youtube", "deezer", "soundcloud"];
+        async function robustSearch(q, sourceIndex = 0) {
+            if (sourceIndex >= searchSources.length) return null;
+            const type = searchSources[sourceIndex];
+            const prefixMap = { youtube: "ytsearch:", deezer: "dzsearch:", soundcloud: "scsearch:" };
             try {
-                const searchType = type === "youtube" ? "ytsearch:" : "scsearch:";
-                // If it's a URL, search exactly as is, otherwise prefix with search type
-                const searchParams = q.startsWith("http") ? q : `${searchType}${q}`;
+                const searchParams = q.startsWith("http") ? q : `${prefixMap[type]}${q}`;
                 
                 console.log(`[${INSTANCE_ID}] [SEARCH] Trying ${type} for: ${q}`);
                 const res = await player.search({ query: searchParams }, interaction.user);
@@ -404,19 +412,12 @@ client.on("interactionCreate", async (interaction) => {
                     return res;
                 }
                 
-                // Fallback to SoundCloud if YouTube failed
-                if (type === "youtube") {
-                    console.log(`[FALLBACK] YouTube failed or empty, trying SoundCloud for: ${q}`);
-                    return await robustSearch(q, "soundcloud");
-                }
-                
-                return null;
+                // Try next source
+                console.log(`[FALLBACK] ${type} failed or empty, trying next source for: ${q}`);
+                return await robustSearch(q, sourceIndex + 1);
             } catch (err) {
                 console.error(`[SEARCH ERROR] ${type} failed:`, err.message);
-                if (type === "youtube") {
-                    return await robustSearch(q, "soundcloud");
-                }
-                return null;
+                return await robustSearch(q, sourceIndex + 1);
             }
         }
 

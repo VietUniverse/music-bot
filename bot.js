@@ -221,14 +221,17 @@ client.lavalink.on("queueEnd", (player) => {
 
 // Helper: Search across all connected nodes (for plugins not available on every node)
 async function searchAcrossNodes(query, requester) {
-    // Try all connected nodes for the search
     const nodes = [...client.lavalink.nodeManager.nodes.values()].filter(n => n.connected);
     for (const node of nodes) {
         try {
+            console.log(`  [CROSS-NODE] Trying node ${node.id} for: ${query.substring(0, 50)}...`);
             const res = await node.search({ query }, requester);
-            if (res && res.tracks?.length > 0) return res;
+            if (res && res.tracks?.length > 0) {
+                console.log(`  [CROSS-NODE] ✅ Found ${res.tracks.length} tracks on node ${node.id}`);
+                return res;
+            }
         } catch (e) {
-            // This node doesn't support this search type, try next
+            console.log(`  [CROSS-NODE] ❌ Node ${node.id} failed: ${e.message.substring(0, 80)}`);
             continue;
         }
     }
@@ -242,8 +245,8 @@ client.lavalink.on("trackStuck", async (player, track) => {
     // Multi-tier fallback: YouTube → Deezer → SoundCloud
     if (track.info.sourceName === "youtube" || track.info.sourceName === "soundcloud") {
         const fallbackSources = track.info.sourceName === "youtube" 
-            ? [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "scsearch:", name: "SoundCloud" }]
-            : [{ prefix: "dzsearch:", name: "Deezer" }];
+            ? [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "spsearch:", name: "Spotify" }, { prefix: "scsearch:", name: "SoundCloud" }]
+            : [{ prefix: "dzsearch:", name: "Deezer" }, { prefix: "spsearch:", name: "Spotify" }];
         
         for (const source of fallbackSources) {
             console.log(`[${INSTANCE_ID}] [STUCK-FALLBACK] Trying ${source.name} for: ${track.info.title}`);
@@ -412,11 +415,11 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         // YouTube-First with Deezer/SoundCloud Fallback logic
-        const searchSources = ["youtube", "deezer", "soundcloud"];
+        const searchSources = ["youtube", "deezer", "spotify", "soundcloud"];
         async function robustSearch(q, sourceIndex = 0) {
             if (sourceIndex >= searchSources.length) return null;
             const type = searchSources[sourceIndex];
-            const prefixMap = { youtube: "ytsearch:", deezer: "dzsearch:", soundcloud: "scsearch:" };
+            const prefixMap = { youtube: "ytsearch:", deezer: "dzsearch:", spotify: "spsearch:", soundcloud: "scsearch:" };
             try {
                 const searchParams = q.startsWith("http") ? q : `${prefixMap[type]}${q}`;
                 

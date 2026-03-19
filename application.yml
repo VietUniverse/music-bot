@@ -44,7 +44,7 @@ plugins:
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
     oauth:
-      enabled: true
+      enabled: false
     remoteCipher:
       url: "https://cipher.kikkia.dev/"
       userAgent: "DuViMusicBot"

@@ -181,8 +181,7 @@ client.lavalink.on("playerUpdate", (player) => {
     const isConnected = !!player.voiceChannelId;
     console.log(`🔹 [${INSTANCE_ID}] Player Update for ${player.guildId}: Node: ${nodeId}, Connected: ${isConnected}, Playing: ${player.playing}, Volume: ${player.volume}%`);
     if (isConnected && !player.playing && player.queue.current) {
-        console.log(`⚠️ [${INSTANCE_ID}] Player STUCK on ${player.guildId} - State:`, player.state);
-        
+        // player might be buffering or stuck
         // Failsafe: Only destroy truly DISCONNECTED zombie players
         if (player.state === "DISCONNECTED") {
             console.log(`🧨 [${INSTANCE_ID}] Destroying zombie player for ${player.guildId}`);
@@ -406,7 +405,6 @@ client.on("interactionCreate", async (interaction) => {
                 }
             }
         } catch (e) {
-            console.error("URL parsing failed:", e);
             // Not a URL — treat as text search, robustSearch will try YouTube first
         }
 

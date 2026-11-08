@@ -436,6 +436,24 @@ client.once("ready", async () => {
 
 // ─── Voice: tự rời khi phòng trống ──────────────────────────────
 client.on("voiceStateUpdate", (oldState, newState) => {
+    // Bot bị kéo sang voice channel khác → đổi nơi nhận tin nhắn + cập nhật 247
+    if (oldState.id === client.user?.id) {
+        const gid = oldState.guild.id;
+        if (newState.channelId) {
+            const p = getPlayer(gid);
+            if (p) p.textChannelId = newState.channelId;
+            if (stay247.has(gid)) {
+                stay247.set(gid, newState.channelId);
+                if (savedState?.guilds?.[gid]) {
+                    savedState.guilds[gid].voiceChannelId = newState.channelId;
+                    savedState.guilds[gid].textChannelId = newState.channelId;
+                }
+                saveState("moved");
+            }
+        }
+        return;
+    }
+
     const guildId = oldState.guild.id;
     const player = getPlayer(guildId);
     if (!player?.voiceChannelId) return;
@@ -953,6 +971,9 @@ async function handleCommand(interaction) {
             return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`⏭ Đã bỏ qua **${title}**`)] });
         }
         case "stop": {
+            stay247.delete(guildId);
+            if (savedState?.guilds?.[guildId]) savedState.guilds[guildId].stay247 = false;
+            saveState("stop");
             await player.destroy();
             return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("⏹ Đã dừng và rời voice.")] });
         }
@@ -1202,55 +1223,92 @@ function saveState(reason = "") {
     }, wait);
 }
 
-async function restoreState() {
-    if (!stateEnabled) return;
-    let file = null;
+let savedState = null;
+const restoring = new Set();
+
+async function restoreGuild(gid, st) {
+    if (restoring.has(gid)) return;
+    const guild = client.guilds.cache.get(gid);
+    const vc = guild?.channels.cache.get(st.voiceChannelId);
+    if (!guild || !vc) return;
+    if (getPlayer(gid)?.connected) return;
+
+    restoring.add(gid);
     try {
-        file = await ghGetState();
-    } catch (e) {
-        return console.warn("⚠️ Không đọc được trạng thái:", e.message);
-    }
-    if (!file?.data?.guilds) return console.log("♻️ Chưa có trạng thái để khôi phục");
-
-    for (const [gid, st] of Object.entries(file.data.guilds)) {
-        if (st.autoplay) autoplay.add(gid);
-        if (!st.stay247) continue;
-        if (st.voiceChannelId) stay247.set(gid, st.voiceChannelId);
-
-        const guild = client.guilds.cache.get(gid);
-        const vc = guild?.channels.cache.get(st.voiceChannelId);
-        if (!guild || !vc) continue;
-
-        try {
-            const player = client.lavalink.createPlayer({
+        let player = getPlayer(gid);
+        if (!player) {
+            player = client.lavalink.createPlayer({
                 guildId: gid,
                 voiceChannelId: vc.id,
                 textChannelId: st.textChannelId || vc.id,
                 selfDeaf: true,
                 volume: 80,
             });
-            await player.connect();
-
-            const enc = (st.tracks || []).map((x) => x.encoded).filter(Boolean);
-            if (!enc.length) {
-                console.log(`♻️ [${gid}] đã vào lại voice (không có bài để phát)`);
-                continue;
-            }
-
-            for (let i = 0; i < 20 && !player.node?.connected; i++) {
-                await new Promise((r) => setTimeout(r, 1000));
-            }
-            const tracks = await player.node.decode.multipleTracks(enc, client.user);
-            player.queue.add(tracks);
-            await player.play();
-            const pos = Number(st.tracks?.[0]?.position || 0);
-            if (pos > 2000) await player.seek(pos);
-            console.log(`♻️ [${gid}] khôi phục ${tracks.length} bài tại ${Math.round(pos / 1000)}s`);
-        } catch (e) {
-            console.warn(`⚠️ Khôi phục ${gid} lỗi:`, e.message);
         }
+        if (!player.connected) await player.connect();
+
+        const enc = (st.tracks || []).map((x) => x.encoded).filter(Boolean);
+        if (!enc.length) {
+            console.log(`♻️ [${gid}] đã vào lại ${vc.name} (không có bài để phát)`);
+            return;
+        }
+
+        for (let i = 0; i < 20 && !player.node?.connected; i++) {
+            await new Promise((r) => setTimeout(r, 1000));
+        }
+        const tracks = await player.node.decode.multipleTracks(enc, client.user);
+        player.queue.add(tracks);
+        await player.play();
+        const pos = Number(st.tracks?.[0]?.position || 0);
+        if (pos > 2000) await player.seek(pos);
+        console.log(`♻️ [${gid}] khôi phục ${tracks.length} bài tại ${Math.round(pos / 1000)}s`);
+    } catch (e) {
+        console.warn(`⚠️ Khôi phục ${gid} lỗi:`, e.message);
+    } finally {
+        restoring.delete(gid);
     }
 }
+
+async function restoreState() {
+    if (!stateEnabled) return;
+    try {
+        const file = await ghGetState();
+        savedState = file?.data || null;
+    } catch (e) {
+        return console.warn("⚠️ Không đọc được trạng thái:", e.message);
+    }
+    if (!savedState?.guilds) return console.log("♻️ Chưa có trạng thái để khôi phục");
+
+    for (const [gid, st] of Object.entries(savedState.guilds)) {
+        if (st.autoplay) autoplay.add(gid);
+        if (!st.stay247) continue;
+        if (st.voiceChannelId) stay247.set(gid, st.voiceChannelId);
+        await restoreGuild(gid, st);
+    }
+}
+
+// Watchdog: nếu 247 đang bật mà bot rớt khỏi voice (node chết, mạng, restart)
+// thì tự vào lại. Chạy mỗi 90 giây. Nhờ vậy một lần restore lỗi không làm bot
+// nằm ngoài voice mãi mãi.
+async function ensureStay247() {
+    if (!savedState?.guilds) return;
+    for (const [gid, st] of Object.entries(savedState.guilds)) {
+        if (!st.stay247) continue;
+        const player = getPlayer(gid);
+        if (player?.connected && player.voiceChannelId === st.voiceChannelId) continue;
+        if (player?.connected && player.voiceChannelId) {
+            // bot đang ở kênh khác (bị kéo) → cập nhật lại mục tiêu, không ép về
+            st.voiceChannelId = player.voiceChannelId;
+            continue;
+        }
+        const g = client.guilds.cache.get(gid);
+        const vc = g?.channels.cache.get(st.voiceChannelId);
+        if (!vc) continue;
+        console.log(`🔄 [${gid}] 247: bot không ở trong voice → vào lại ${vc.name}`);
+        await restoreGuild(gid, st);
+    }
+}
+setInterval(ensureStay247, 90_000);
 
 // ─── Graceful shutdown ──────────────────────────────────────────
 let shuttingDown = false;

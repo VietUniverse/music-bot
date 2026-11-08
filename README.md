@@ -224,6 +224,41 @@ npm start
 
 > **Khuyến nghị:** Oracle Cloud Always Free, region Singapore. Miễn phí vĩnh viễn, 2 OCPU/12 GB là quá thừa cho Lavalink (thực tế chỉ cần ~300 MB RAM).
 
+### Sinh viên — không có thẻ tín dụng?
+
+**Azure for Students** là lựa chọn duy nhất đáp ứng cả 2 điều kiện: **miễn phí** và **không cần thẻ**.
+
+| Điều kiện | Chi tiết |
+|---|---|
+| Credit | **$100** dùng trong 12 tháng |
+| Thẻ tín dụng | **Không cần** |
+| Xác minh | Email trường (.edu / email đại học) hoặc thẻ sinh viên |
+| Gia hạn | Mỗi năm 1 lần khi còn là sinh viên |
+| Region | **Southeast Asia (Singapore)** |
+
+VM nhỏ nhất (B1s: 1 vCPU, 1 GB RAM) ≈ **$7,6/tháng** → $100 dùng được **~13 tháng**.
+
+**Các bước:**
+
+1. Vào `azure.microsoft.com/en-us/free/students` → **Start free**
+2. Đăng nhập tài khoản Microsoft, xác minh bằng email trường
+3. **Create a resource → Virtual machine**:
+   - Image: **Ubuntu 22.04 LTS**
+   - Size: **B1s** (1 vCPU, 1 GB) — quá đủ cho Lavalink
+   - Region: **Southeast Asia**
+   - Authentication: SSH public key (tạo mới, tải về)
+4. Vào **Networking → Add inbound port rule**: port `2333`, protocol TCP, source Any
+5. SSH vào máy và chạy 1 lệnh:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/VietUniverse/music-bot/master/scripts/deploy-lavalink.sh -o deploy.sh
+bash deploy.sh MatKhauCuaBan
+```
+
+Script sẽ in ra 4 giá trị → dán vào GitHub Secrets là xong.
+
+> Không có email trường? Dùng **GitHub Student Developer Pack** (`education.github.com/pack`) để xác minh bằng ảnh thẻ sinh viên, sau đó lấy Azure for Students.
+
 ### Trỏ bot sang node riêng
 
 Chỉ cần thêm 4 secret (Settings → Secrets → Actions):

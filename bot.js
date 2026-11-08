@@ -457,7 +457,9 @@ client.lavalink.on("trackEnd", (player, track, payload) => {
     console.log(`⏹ Track end: ${track?.info?.title} (${payload?.reason})`);
 });
 
-// ─── Cập nhật thanh tiến trình mỗi 10 giây ─────────────────────
+// ─── Cập nhật thanh tiến trình mỗi 6 giây ──────────────────────
+// Lavalink gửi playerUpdate mỗi 5s (application.yml) → 6s để luôn có số mới,
+// mà vẫn dưới giới hạn 5 lần sửa/5 giây của Discord.
 async function refreshNowPlaying() {
     for (const [guildId, info] of nowPlayingMsgs) {
         const player = getPlayer(guildId);
@@ -490,7 +492,7 @@ async function refreshNowPlaying() {
         }
     }
 }
-setInterval(refreshNowPlaying, 10_000);
+setInterval(refreshNowPlaying, 6_000);
 
 client.lavalink.on("queueEnd", async (player) => {
     const ch = client.channels.cache.get(player.textChannelId);

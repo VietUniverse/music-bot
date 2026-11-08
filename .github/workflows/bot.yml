@@ -1,5 +1,9 @@
 name: Music Bot
 
+# Bot cần ghi file state/<bot>.json vào repo để nhớ trạng thái qua restart
+permissions:
+  contents: write
+
 # ─── Khi nào chạy ────────────────────────────────────────────────
 # GitHub giới hạn 1 job tối đa 6 giờ → đặt lịch mỗi 5 giờ để job mới
 # khởi động trước khi job cũ bị kill. Cron có độ lệch ngẫu nhiên để
@@ -55,6 +59,8 @@ jobs:
       TOKEN_ENV: ${{ matrix.token_env }}
       BOT_NODE_INDEX: ${{ matrix.node_index }}
       USE_LOCAL_LAVALINK: ${{ matrix.local_lavalink }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
 
     steps:
       - name: Checkout

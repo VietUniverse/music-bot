@@ -118,6 +118,23 @@ npm start
 
 ---
 
+## ♻️ 24/7 sống sót qua restart
+
+Trên GitHub Actions, job bị restart mỗi ~5 giờ. Bot tự lưu trạng thái vào **`state/<bot>.json`** trong repo (qua GitHub Contents API) để sau restart vẫn tiếp tục:
+
+| Dữ liệu lưu | Chi tiết |
+|---|---|
+| `/247` | bật/tắt + ID voice channel |
+| `/autoplay` | bật/tắt |
+| Bài đang phát | `encoded track` + vị trí (giây) |
+| Hàng đợi | 10 bài kế tiếp |
+
+**Khi restart:** bot tự vào lại đúng voice channel, decode lại bài, phát tiếp từ đúng vị trí, giữ nguyên 247.
+
+**Khi nào lưu:** mỗi lần bật/tắt 247 hoặc autoplay, sau `/play`, và **ngay trước khi tắt** (SIGTERM). Nếu job bị kill cứng (hết 6 giờ) thì mất phần phát sinh sau lần lưu cuối.
+
+Yêu cầu: workflow phải có `permissions: contents: write` (đã khai báo sẵn) để bot commit được file state. Commit do bot tạo **không** kích hoạt workflow (GitHub chặn `GITHUB_TOKEN` trigger).
+
 ## 📁 Cấu trúc
 
 ```

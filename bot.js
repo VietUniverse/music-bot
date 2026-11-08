@@ -143,7 +143,7 @@ client.lavalink = new LavalinkManager({
 client.on("raw", (d) => client.lavalink.sendRawData(d));
 
 // ─── Trạng thái mở rộng ─────────────────────────────────────────
-const stay247 = new Set();      // guild luôn ở lại voice
+const stay247 = new Map();      // guild luôn ở lại voice
 const autoplay = new Set();     // guild tự phát bài liên quan
 const emptyTimers = new Map();  // guild -> timeout rời voice
 const searchCache = new Map();  // userId -> { tracks, ts }
@@ -431,6 +431,7 @@ client.once("ready", async () => {
         console.error("❌ init Lavalink:", e.message);
     }
     await registerCommands();
+    await restoreState();
 });
 
 // ─── Voice: tự rời khi phòng trống ──────────────────────────────
@@ -852,6 +853,7 @@ async function handleCommand(interaction) {
         player.queue.add(tracks);
         if (player.paused) await player.resume();
         if (!player.playing) await player.play();
+        saveState("play");
 
         if (res.loadType === "playlist") {
             const radioNote = playlistInfo?.isRadio
@@ -1059,9 +1061,11 @@ async function handleCommand(interaction) {
         case "247": {
             if (stay247.has(guildId)) {
                 stay247.delete(guildId);
+                saveState("247-off");
                 return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("📌 Đã **tắt** chế độ 24/7.")] });
             }
-            stay247.add(guildId);
+            stay247.set(guildId, player?.voiceChannelId || null);
+            saveState("247-on");
             if (emptyTimers.has(guildId)) {
                 clearTimeout(emptyTimers.get(guildId));
                 emptyTimers.delete(guildId);
@@ -1079,9 +1083,11 @@ async function handleCommand(interaction) {
         case "autoplay": {
             if (autoplay.has(guildId)) {
                 autoplay.delete(guildId);
+                saveState("autoplay-off");
                 return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("♾ Đã **tắt** autoplay.")] });
             }
             autoplay.add(guildId);
+            saveState("autoplay-on");
             return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("♾ Đã **bật** autoplay — tự tìm bài liên quan khi hết hàng đợi.")] });
         }
         default:
@@ -1100,12 +1106,154 @@ process.on("uncaughtException", (err) => {
     console.error(`[${INSTANCE_ID}] 🧨 Uncaught exception:`, err);
 });
 
+
+// ─── Lưu trạng thái bền (sống sót qua restart) ──────────────────
+// Dùng GitHub Contents API của chính repo → không cần dịch vụ ngoài.
+// GITHUB_TOKEN do workflow truyền vào, chỉ có quyền trong job hiện tại.
+const STATE_PATH = `state/${(process.env.TOKEN_ENV || "DISCORD_TOKEN").toLowerCase()}.json`;
+const GH_TOKEN = process.env.GITHUB_TOKEN;
+const GH_REPO = process.env.GITHUB_REPOSITORY;
+const stateEnabled = Boolean(GH_TOKEN && GH_REPO);
+
+function ghHeaders() {
+    return {
+        Authorization: `Bearer ${GH_TOKEN}`,
+        Accept: "application/vnd.github+json",
+        "Content-Type": "application/json",
+        "User-Agent": "vietuniverse-music-bot",
+    };
+}
+
+async function ghGetState() {
+    const r = await fetch(
+        `https://api.github.com/repos/${GH_REPO}/contents/${STATE_PATH}?ref=master`,
+        { headers: ghHeaders() }
+    );
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(`GET ${r.status}`);
+    const j = await r.json();
+    return { sha: j.sha, data: JSON.parse(Buffer.from(j.content, "base64").toString("utf8")) };
+}
+
+async function ghPutState(data, sha) {
+    const body = {
+        message: `chore(state): ${new Date().toISOString()}`,
+        content: Buffer.from(JSON.stringify(data)).toString("base64"),
+        branch: "master",
+    };
+    if (sha) body.sha = sha;
+    const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${STATE_PATH}`, {
+        method: "PUT",
+        headers: ghHeaders(),
+        body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error(`PUT ${r.status} ${(await r.text()).slice(0, 160)}`);
+}
+
+function snapshotState() {
+    const ids = new Set([...stay247.keys(), ...autoplay, ...client.lavalink.players.keys()]);
+    const guilds = {};
+    for (const gid of ids) {
+        const player = getPlayer(gid);
+        const tracks = [];
+        if (player?.queue?.current?.encoded) {
+            tracks.push({
+                encoded: player.queue.current.encoded,
+                position: Math.round(player.position || 0),
+            });
+        }
+        for (const tr of (player?.queue?.tracks || []).slice(0, 10)) {
+            if (tr.encoded) tracks.push({ encoded: tr.encoded });
+        }
+        guilds[gid] = {
+            stay247: stay247.has(gid),
+            autoplay: autoplay.has(gid),
+            voiceChannelId: stay247.get(gid) || player?.voiceChannelId || null,
+            textChannelId: player?.textChannelId || null,
+            tracks,
+        };
+    }
+    return { version: 1, savedAt: new Date().toISOString(), guilds };
+}
+
+async function saveStateNow(reason = "") {
+    if (!stateEnabled) return;
+    try {
+        const cur = await ghGetState().catch(() => null);
+        await ghPutState(snapshotState(), cur?.sha);
+        console.log(`💾 Đã lưu trạng thái (${reason || "auto"})`);
+    } catch (e) {
+        console.warn("⚠️ Không lưu được trạng thái:", e.message);
+    }
+}
+
+let stateTimer = null;
+function saveState(reason = "") {
+    if (!stateEnabled) return;
+    if (stateTimer) clearTimeout(stateTimer);
+    stateTimer = setTimeout(() => {
+        stateTimer = null;
+        saveStateNow(reason);
+    }, 2500);
+}
+
+async function restoreState() {
+    if (!stateEnabled) return;
+    let file = null;
+    try {
+        file = await ghGetState();
+    } catch (e) {
+        return console.warn("⚠️ Không đọc được trạng thái:", e.message);
+    }
+    if (!file?.data?.guilds) return console.log("♻️ Chưa có trạng thái để khôi phục");
+
+    for (const [gid, st] of Object.entries(file.data.guilds)) {
+        if (st.autoplay) autoplay.add(gid);
+        if (!st.stay247) continue;
+        if (st.voiceChannelId) stay247.set(gid, st.voiceChannelId);
+
+        const guild = client.guilds.cache.get(gid);
+        const vc = guild?.channels.cache.get(st.voiceChannelId);
+        if (!guild || !vc) continue;
+
+        try {
+            const player = client.lavalink.createPlayer({
+                guildId: gid,
+                voiceChannelId: vc.id,
+                textChannelId: st.textChannelId || vc.id,
+                selfDeaf: true,
+                volume: 80,
+            });
+            await player.connect();
+
+            const enc = (st.tracks || []).map((x) => x.encoded).filter(Boolean);
+            if (!enc.length) {
+                console.log(`♻️ [${gid}] đã vào lại voice (không có bài để phát)`);
+                continue;
+            }
+
+            for (let i = 0; i < 20 && !player.node?.connected; i++) {
+                await new Promise((r) => setTimeout(r, 1000));
+            }
+            const tracks = await player.node.decode.multipleTracks(enc, client.user);
+            player.queue.add(tracks);
+            await player.play();
+            const pos = Number(st.tracks?.[0]?.position || 0);
+            if (pos > 2000) await player.seek(pos);
+            console.log(`♻️ [${gid}] khôi phục ${tracks.length} bài tại ${Math.round(pos / 1000)}s`);
+        } catch (e) {
+            console.warn(`⚠️ Khôi phục ${gid} lỗi:`, e.message);
+        }
+    }
+}
+
 // ─── Graceful shutdown ──────────────────────────────────────────
 let shuttingDown = false;
 async function shutdown(signal) {
     if (shuttingDown) return;
     shuttingDown = true;
     console.log(`🛑 ${signal} — đang tắt...`);
+    await saveStateNow("shutdown");
     try {
         for (const player of client.lavalink.players.values()) {
             await player.destroy().catch(() => {});

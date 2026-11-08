@@ -61,6 +61,11 @@ jobs:
       USE_LOCAL_LAVALINK: ${{ matrix.local_lavalink }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_REPOSITORY: ${{ github.repository }}
+      # Tuỳ chọn: trỏ tới Lavalink riêng (VPS/Oracle). Để trống = dùng node công khai.
+      LAVALINK_HOST: ${{ secrets.LAVALINK_HOST }}
+      LAVALINK_PORT: ${{ secrets.LAVALINK_PORT }}
+      LAVALINK_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
+      LAVALINK_SECURE: ${{ secrets.LAVALINK_SECURE }}
 
     steps:
       - name: Checkout

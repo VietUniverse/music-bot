@@ -36,7 +36,7 @@ const { LavalinkManager } = require("lavalink-client");
 const TOKEN_ENV = process.env.TOKEN_ENV || "DISCORD_TOKEN";
 const DISCORD_TOKEN = process.env[TOKEN_ENV] || process.env.DISCORD_TOKEN;
 const LAVALINK_PASSWORD = process.env.LAVALINK_PASSWORD || "youshallnotpass";
-const LAVALINK_HOST = process.env.LAVALINK_HOST || "127.0.0.1";
+const LAVALINK_HOST = (process.env.LAVALINK_HOST || "").trim();
 const LAVALINK_PORT = Number(process.env.LAVALINK_PORT || 2333);
 const USE_LOCAL_LAVALINK = String(process.env.USE_LOCAL_LAVALINK ?? "1") === "1";
 const INSTANCE_ID = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -82,11 +82,27 @@ const client = new Client({
 // ─── Lavalink nodes ─────────────────────────────────────────────
 // Node cục bộ (do workflow/docker khởi động) — ổn định nhất.
 // Các node công khai chỉ là dự phòng khi node cục bộ chết.
+// Node riêng (VPS/Oracle/Docker) — ưu tiên số 1 nếu có cấu hình.
+// Chỉ cần đặt LAVALINK_HOST (+ PORT/PASSWORD/SECURE) là bot tự dùng node đó.
+const CUSTOM_HOST = (process.env.LAVALINK_HOST || "").trim();
+const CUSTOM_SECURE = String(process.env.LAVALINK_SECURE || "0") === "1";
+
 const nodes = [];
-if (USE_LOCAL_LAVALINK) {
+if (CUSTOM_HOST) {
+    nodes.push({
+        id: "primary",
+        host: CUSTOM_HOST,
+        port: LAVALINK_PORT,
+        authorization: LAVALINK_PASSWORD,
+        secure: CUSTOM_SECURE,
+        retryAmount: 50,
+        retryDelay: 3000,
+    });
+    console.log(`[NODE] Dùng node riêng: ${CUSTOM_HOST}:${LAVALINK_PORT} (secure=${CUSTOM_SECURE})`);
+} else if (USE_LOCAL_LAVALINK) {
     nodes.push({
         id: "local",
-        host: LAVALINK_HOST,
+        host: "127.0.0.1",
         port: LAVALINK_PORT,
         authorization: LAVALINK_PASSWORD,
         secure: false,

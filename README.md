@@ -200,7 +200,61 @@ npm start
 
 ---
 
-## 🔧 Xử lý sự cố
+## 🎧 Node nhạc — cách hết lag
+
+Âm thanh đi theo đường: **Bot → Lavalink → Discord Voice**. Lag gần như luôn đến từ Lavalink, không phải từ code.
+
+### Vì sao node công khai bị giật
+
+| Vấn đề | Giải thích |
+|---|---|
+| Dùng chung IP | Hàng trăm bot khác dùng chung một node → YouTube trả `429` liên tục |
+| Quá tải CPU | Node miễn phí chạy quá số player thiết kế → buffer tràn |
+| Khoảng cách | Node ở châu Âu/Mỹ, voice server ở Singapore → 200–300ms |
+| Không kiểm soát | Node chết/đổi địa chỉ bất cứ lúc nào |
+
+### So sánh lựa chọn
+
+| Phương án | Chi phí | Độ ổn định | Ghi chú |
+|---|---|---|---|
+| Node công khai (đang dùng) | 0đ | ⭐ | Giật khi đông, không kiểm soát |
+| **Oracle Cloud Always Free** | **0đ** | ⭐⭐⭐⭐ | 2 OCPU / 12 GB ARM, chọn region **Singapore** |
+| VPS Singapore giá rẻ | ~50–120k/tháng | ⭐⭐⭐⭐⭐ | 1 GB RAM là đủ cho Lavalink |
+| Nhà cung cấp Lavalink | từ ~₹29/tháng | ⭐⭐⭐⭐ | VisiHost, Altivora… có node Singapore |
+
+> **Khuyến nghị:** Oracle Cloud Always Free, region Singapore. Miễn phí vĩnh viễn, 2 OCPU/12 GB là quá thừa cho Lavalink (thực tế chỉ cần ~300 MB RAM).
+
+### Trỏ bot sang node riêng
+
+Chỉ cần thêm 4 secret (Settings → Secrets → Actions):
+
+| Secret | Ví dụ |
+|---|---|
+| `LAVALINK_HOST` | `140.xx.xx.xx` (IP VPS) hoặc domain |
+| `LAVALINK_PORT` | `2333` |
+| `LAVALINK_PASSWORD` | mật khẩu bạn đặt trong `application.yml` |
+| `LAVALINK_SECURE` | `0` nếu không có SSL, `1` nếu có |
+
+Bot tự dùng node này **trước**, node công khai chỉ còn là dự phòng khi node riêng chết.
+Bỏ trống 4 secret → quay lại dùng node công khai như hiện tại.
+
+### Dựng Lavalink trên Oracle (5 phút)
+
+```bash
+# 1. Tạo VM: Shape Ampere A1 (2 OCPU / 12 GB), Image Ubuntu 22.04, Region Singapore
+# 2. Mở port 2333 trong Security List / NSG
+# 3. SSH vào máy
+sudo apt update && sudo apt install -y docker.io docker-compose-plugin git
+git clone https://github.com/VietUniverse/music-bot.git
+cd music-bot
+nano application.yml          # đổi password trong lavalink.server.password
+sudo docker compose up -d lavalink
+curl -H "Authorization: <password>" http://localhost:2333/version
+```
+
+Sau đó điền 4 secret ở trên và chạy lại workflow.
+
+
 
 | Triệu chứng | Nguyên nhân | Cách xử lý |
 |---|---|---|

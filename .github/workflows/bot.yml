@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       bot:
-        description: "Chạy bot nào (1/2/3/all)"
+        description: "Chạy bot nào (2/3/all)"
         default: "all"
         required: false
   schedule:
@@ -37,27 +37,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Bot 1 đã tắt theo yêu cầu — chỉ chạy bot 2 và 3.
-        # Bot 2 được giao chạy Lavalink cục bộ (local_lavalink: "1") để có node ổn định.
+        # Bot 1 đã tắt. Bot 2 và 3 đều dùng node Lavalink công khai (không chạy Lavalink cục bộ).
+        # node_index khác nhau để mỗi bot ưu tiên một node khác nhau, tránh dồn tải.
         include:
           - bot: 2
             token_env: DISCORD_TOKEN_2
             node_index: 0
-            local_lavalink: "1"
+            local_lavalink: "0"
           - bot: 3
             token_env: DISCORD_TOKEN_3
             node_index: 1
             local_lavalink: "0"
 
     env:
-      DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
       DISCORD_TOKEN_2: ${{ secrets.DISCORD_TOKEN_2 }}
       DISCORD_TOKEN_3: ${{ secrets.DISCORD_TOKEN_3 }}
-      LAVALINK_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
       TOKEN_ENV: ${{ matrix.token_env }}
       BOT_NODE_INDEX: ${{ matrix.node_index }}
       USE_LOCAL_LAVALINK: ${{ matrix.local_lavalink }}
-      JAVA_TOOL_OPTIONS: "-Xmx768m"
 
     steps:
       - name: Checkout
@@ -68,29 +65,6 @@ jobs:
         with:
           node-version: 22
           cache: npm
-
-      - name: Setup Java 17
-        if: matrix.local_lavalink == '1'
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Cache Lavalink.jar
-        if: matrix.local_lavalink == '1'
-        uses: actions/cache@v4
-        with:
-          path: Lavalink.jar
-          key: lavalink-jar-4.0.8
-
-      - name: Download Lavalink
-        if: matrix.local_lavalink == '1'
-        run: |
-          if [ ! -s Lavalink.jar ]; then
-            curl -fsSL -o Lavalink.jar \
-              "https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar"
-          fi
-          ls -lh Lavalink.jar
 
       - name: Install dependencies
         run: |
@@ -104,8 +78,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bot-${{ matrix.bot }}-logs
-          path: |
-            lavalink.log
-            *.log
+          path: "*.log"
           retention-days: 3
           if-no-files-found: ignore

@@ -1291,19 +1291,21 @@ async function restoreState() {
 // thì tự vào lại. Chạy mỗi 90 giây. Nhờ vậy một lần restore lỗi không làm bot
 // nằm ngoài voice mãi mãi.
 async function ensureStay247() {
-    if (!savedState?.guilds) return;
-    for (const [gid, st] of Object.entries(savedState.guilds)) {
-        if (!st.stay247) continue;
+    // Dùng stay247 (in-memory) làm nguồn chính để cả guild bật 247 sau khi bot
+    // khởi động vẫn được watchdog trông coi.
+    for (const [gid, chId] of stay247) {
         const player = getPlayer(gid);
-        if (player?.connected && player.voiceChannelId === st.voiceChannelId) continue;
-        if (player?.connected && player.voiceChannelId) {
-            // bot đang ở kênh khác (bị kéo) → cập nhật lại mục tiêu, không ép về
-            st.voiceChannelId = player.voiceChannelId;
-            continue;
-        }
+        if (player?.connected) continue;
+
         const g = client.guilds.cache.get(gid);
-        const vc = g?.channels.cache.get(st.voiceChannelId);
+        const vc = g?.channels.cache.get(chId);
         if (!vc) continue;
+
+        const st = savedState?.guilds?.[gid] || { stay247: true, tracks: [] };
+        st.stay247 = true;
+        st.voiceChannelId = chId;
+        st.textChannelId = st.textChannelId || chId;
+
         console.log(`🔄 [${gid}] 247: bot không ở trong voice → vào lại ${vc.name}`);
         await restoreGuild(gid, st);
     }

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ðŸŽµ Discord Music Bot â€” Lavalink v4
  * ---------------------------------------------------------------
  * Cháº¡y Ä‘Æ°á»£c trÃªn GitHub Actions, VPS, Docker, Fly.io, Railway...

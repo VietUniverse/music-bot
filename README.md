@@ -65,7 +65,13 @@ Khi bạn dán **link**, bot **không bao giờ** fallback sang tìm kiếm bằ
 | Âm thanh | `/volume <1-200>` `/filter <bass\|nightcore\|vaporwave\|8d\|rock\|pop\|classic\|off>` |
 | Khác | `/247` (ở lại voice) · `/autoplay` · `/nowplaying` (có nút bấm) · `/lyrics` · `/ping` · `/debug` · `/help` |
 
-**Nút bấm** trên `/nowplaying`: ⏯ pause/resume · ⏭ skip · 🔀 shuffle · 🔁 loop · ⏹ stop.
+**Bảng điều khiển** (gửi vào **chat của voice channel** nếu bot có quyền, không thì gửi kênh gõ lệnh):
+
+| Hàng 1 | ⏯ pause/resume · ⏭ skip · ⏹ stop · 🔀 shuffle · 🔁 loop |
+|---|---|
+| Hàng 2 | `-10s` · `+10s` · ⏱️ **Tua** (mở hộp thoại nhập `1:30`) · 📜 **Hàng đợi** |
+
+Muốn bot nhắn được vào voice channel chat, cấp quyền **View Channel · Send Messages · Embed Links** cho bot ở kênh thoại đó. Không có quyền → bot tự lùi về kênh text bạn gõ lệnh.
 
 **Tính năng tự động:**
 - Tự rời voice sau 60s nếu phòng trống (tắt bằng `/247`).

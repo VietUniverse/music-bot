@@ -26,6 +26,9 @@ const {
     ButtonBuilder,
     ButtonStyle,
     StringSelectMenuBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle,
 } = require("discord.js");
 const { LavalinkManager } = require("lavalink-client");
 
@@ -263,20 +266,29 @@ function trackEmbed(track, title = "🎵 Đang phát", player = null) {
     return embed;
 }
 
-function controlRow(player) {
-    return new ActionRowBuilder().addComponents(
+function controlRows(player) {
+    const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId("np:toggle")
             .setEmoji(player.paused ? "▶️" : "⏸️")
             .setStyle(player.paused ? ButtonStyle.Success : ButtonStyle.Secondary),
         new ButtonBuilder().setCustomId("np:skip").setEmoji("⏭️").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("np:stop").setEmoji("⏹️").setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId("np:shuffle").setEmoji("🔀").setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId("np:loop")
             .setEmoji("🔁")
             .setStyle(player.repeatMode === "off" ? ButtonStyle.Secondary : ButtonStyle.Success),
-        new ButtonBuilder().setCustomId("np:stop").setEmoji("⏹️").setStyle(ButtonStyle.Danger),
     );
+
+    const row2 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("np:back10").setLabel("-10s").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("np:fwd10").setLabel("+10s").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("np:seek").setLabel("Tua").setEmoji("⏱️").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("np:queue").setLabel("Hàng đợi").setEmoji("📜").setStyle(ButtonStyle.Secondary),
+    );
+
+    return [row1, row2];
 }
 
 async function safeReply(interaction, payload) {
@@ -315,7 +327,20 @@ async function ensureVoice(interaction) {
     return { guild, channel, member };
 }
 
-async function getOrCreatePlayer(guild, voiceChannel, textChannelId) {
+function resolveTextChannel(guild, voiceChannel, fallbackId) {
+    // Chat riêng của voice channel — nếu bot có quyền gửi thì dùng, không thì quay về kênh gõ lệnh
+    try {
+        const me = guild.members.me;
+        const perms = voiceChannel.permissionsFor?.(me);
+        if (perms?.has(["ViewChannel", "SendMessages", "EmbedLinks"])) return voiceChannel.id;
+    } catch {
+        /* ignore */
+    }
+    return fallbackId;
+}
+
+async function getOrCreatePlayer(guild, voiceChannel, fallbackTextChannelId) {
+    const textChannelId = resolveTextChannel(guild, voiceChannel, fallbackTextChannelId);
     let player = getPlayer(guild.id);
     if (!player) {
         player = client.lavalink.createPlayer({
@@ -327,6 +352,7 @@ async function getOrCreatePlayer(guild, voiceChannel, textChannelId) {
             volume: 80,
         });
     }
+    if (player.textChannelId !== textChannelId) player.textChannelId = textChannelId;
     if (player.connected && player.voiceChannelId !== voiceChannel.id) {
         await player.changeVoiceState({ voiceChannelId: voiceChannel.id });
     } else if (!player.connected) {
@@ -446,7 +472,7 @@ client.lavalink.on("trackStart", (player, track) => {
     if (player.paused) player.resume().catch(() => {});
     const ch = client.channels.cache.get(player.textChannelId);
     if (ch) {
-        ch.send({ embeds: [trackEmbed(track, "🎵 Đang phát", player)], components: [controlRow(player)] })
+        ch.send({ embeds: [trackEmbed(track, "🎵 Đang phát", player)], components: controlRows(player) })
             .then((msg) => nowPlayingMsgs.set(player.guildId, { channelId: ch.id, messageId: msg.id }))
             .catch(() => {});
     }
@@ -483,7 +509,7 @@ async function refreshNowPlaying() {
             }
             await msg.edit({
                 embeds: [trackEmbed(track, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
-                components: [controlRow(player)],
+                components: controlRows(player),
             });
         } catch (e) {
             if (e?.code === 10008 || e?.status === 404) nowPlayingMsgs.delete(guildId);
@@ -559,6 +585,9 @@ client.on("interactionCreate", async (interaction) => {
         if (interaction.isStringSelectMenu() && interaction.customId === "search:pick") {
             return await handleSearchPick(interaction);
         }
+        if (interaction.isModalSubmit() && interaction.customId === "np:seek:modal") {
+            return await handleSeekModal(interaction);
+        }
         if (!interaction.isChatInputCommand()) return;
         await handleCommand(interaction);
     } catch (err) {
@@ -594,6 +623,47 @@ async function handleButton(interaction) {
             await player.setRepeatMode(next);
             break;
         }
+        case "np:back10": {
+            await player.seek(Math.max(0, player.position - 10_000));
+            break;
+        }
+        case "np:fwd10": {
+            const dur = player.queue.current?.info?.duration ?? 0;
+            const target = player.position + 10_000;
+            await player.seek(dur > 0 ? Math.min(target, dur - 1000) : target);
+            break;
+        }
+        case "np:seek": {
+            const modal = new ModalBuilder()
+                .setCustomId("np:seek:modal")
+                .setTitle("Tua tới vị trí")
+                .addComponents(
+                    new ActionRowBuilder().addComponents(
+                        new TextInputBuilder()
+                            .setCustomId("time")
+                            .setLabel("Thời gian (mm:ss hoặc số giây)")
+                            .setStyle(TextInputStyle.Short)
+                            .setPlaceholder("1:30")
+                            .setMaxLength(8)
+                            .setRequired(true)
+                    )
+                );
+            return interaction.showModal(modal);
+        }
+        case "np:queue": {
+            const tracks = player.queue.tracks;
+            const preview = tracks.slice(0, 8).map((x, i) => `**${i + 1}.** ${x.info.title}`).join("\n") || "*trống*";
+            return interaction.reply({
+                ephemeral: true,
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0x5865f2)
+                        .setTitle("📜 Hàng đợi")
+                        .setDescription(preview)
+                        .setFooter({ text: `${tracks.length} bài đang chờ` }),
+                ],
+            });
+        }
     }
 
     const current = player.queue.current;
@@ -601,7 +671,25 @@ async function handleButton(interaction) {
 
     return interaction.update({
         embeds: [trackEmbed(current, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
-        components: [controlRow(player)],
+        components: controlRows(player),
+    });
+}
+
+async function handleSeekModal(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+    const player = getPlayer(interaction.guildId);
+    if (!player?.queue?.current) {
+        return interaction.editReply({ content: "❌ Không có bài nào đang phát." });
+    }
+    const ms = parseTime(interaction.fields.getTextInputValue("time"));
+    if (ms === null) {
+        return interaction.editReply({ content: "❌ Định dạng không hợp lệ. Ví dụ: `1:30` hoặc `90`." });
+    }
+    const dur = player.queue.current.info.duration;
+    const pos = Math.max(0, dur > 0 ? Math.min(ms, dur - 1000) : ms);
+    await player.seek(pos);
+    return interaction.editReply({
+        content: `⏩ Đã tua tới **${formatDuration(pos)}** / ${formatDuration(dur)}`,
     });
 }
 
@@ -893,7 +981,7 @@ async function handleCommand(interaction) {
             if (!cur) return interaction.reply({ content: "❌ Không có bài nào đang phát.", ephemeral: true });
             return interaction.reply({
                 embeds: [trackEmbed(cur, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
-                components: [controlRow(player)],
+                components: controlRows(player),
             });
         }
         case "volume": {

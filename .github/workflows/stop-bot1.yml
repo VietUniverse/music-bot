@@ -1,0 +1,20 @@
+name: Stop Bot 1
+
+# Workflow tạm: dùng đúng concurrency group "music-bot-1" để GitHub tự cancel
+# job Bot 1 đang chạy. Sau khi chạy xong có thể xoá file này.
+on:
+  push:
+    paths:
+      - ".github/workflows/stop-bot1.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: music-bot-1
+  cancel-in-progress: true
+
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Báo hoàn tất
+        run: echo "Bot 1 đã bị cancel. Chỉ còn Bot 2 và Bot 3."

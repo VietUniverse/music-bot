@@ -1181,6 +1181,7 @@ async function saveStateNow(reason = "") {
     try {
         const cur = await ghGetState().catch(() => null);
         await ghPutState(snapshotState(), cur?.sha);
+        lastSaveAt = Date.now();
         console.log(`💾 Đã lưu trạng thái (${reason || "auto"})`);
     } catch (e) {
         console.warn("⚠️ Không lưu được trạng thái:", e.message);
@@ -1188,13 +1189,17 @@ async function saveStateNow(reason = "") {
 }
 
 let stateTimer = null;
+let lastSaveAt = 0;
+const SAVE_COOLDOWN_MS = 60_000; // tối đa 1 commit state / phút để không rác lịch sử repo
+
 function saveState(reason = "") {
     if (!stateEnabled) return;
     if (stateTimer) clearTimeout(stateTimer);
+    const wait = Math.max(2500, SAVE_COOLDOWN_MS - (Date.now() - lastSaveAt));
     stateTimer = setTimeout(() => {
         stateTimer = null;
         saveStateNow(reason);
-    }, 2500);
+    }, wait);
 }
 
 async function restoreState() {

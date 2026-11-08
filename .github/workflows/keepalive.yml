@@ -1,0 +1,75 @@
+name: Keepalive
+
+# Mục đích:
+#  1. Bật lại các workflow bị GitHub tự tắt (sau 60 ngày repo không hoạt động,
+#     hoặc khi bị tắt thủ công).
+#  2. Tạo commit "nhịp tim" mỗi ngày để repo luôn có hoạt động → GitHub không
+#     tự disable scheduled workflow.
+#  3. Nếu bot không còn chạy, tự dispatch lại workflow Music Bot.
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: false
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Bật lại workflow đang bị tắt
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          repo="${{ github.repository }}"
+          gh api "repos/$repo/actions/workflows?per_page=100" --jq '.workflows[] | "\(.id) \(.state) \(.path)"' |
+          while read -r id state path; do
+            echo "• $path — $state"
+            if [ "$state" != "active" ]; then
+              if gh api -X PUT "repos/$repo/actions/workflows/$id/enable" >/dev/null 2>&1; then
+                echo "  ✅ đã bật lại"
+              else
+                echo "  ⚠️ không bật được (cần quyền admin?)"
+              fi
+            fi
+          done
+
+      - name: Commit nhịp tim (giữ repo hoạt động)
+        run: |
+          set -e
+          mkdir -p .github
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/last-keepalive.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/last-keepalive.txt
+          if git diff --staged --quiet; then
+            echo "không có thay đổi"
+          else
+            git commit -m "chore(keepalive): $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Khởi động lại bot nếu đang không chạy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          repo="${{ github.repository }}"
+          active=$(gh api "repos/$repo/actions/runs?per_page=30" \
+            --jq '[.workflow_runs[] | select(.name=="Music Bot") | select(.status=="in_progress" or .status=="queued")] | length' || echo 0)
+          echo "Run đang chạy/đang chờ: $active"
+          if [ "$active" -eq 0 ]; then
+            gh workflow run bot.yml --repo "$repo" && echo "🚀 đã dispatch Music Bot"
+          fi

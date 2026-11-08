@@ -1,5 +1,5 @@
 server:
-  port: 2333
+  port: ${LAVALINK_PORT:2333}
   address: 0.0.0.0
 
 lavalink:
@@ -7,9 +7,9 @@ lavalink:
     - dependency: "dev.lavalink.youtube:youtube-plugin:1.18.0"
       repository: "https://maven.lavalink.dev/releases"
   server:
-    password: "youshallnotpass"
+    password: ${LAVALINK_SERVER_PASSWORD:youshallnotpass}
     sources:
-      youtube: false
+      youtube: false        # dùng youtube-plugin bên dưới thay vì source built-in
       bandcamp: true
       soundcloud: true
       twitch: true
@@ -26,6 +26,8 @@ lavalink:
       rotation: true
       channelMix: true
       lowPass: true
+      karaoke: true
+      distortion: true
     bufferDurationMs: 400
     frameBufferDurationMs: 5000
     opusEncodingQuality: 10
@@ -43,21 +45,21 @@ plugins:
     allowSearch: true
     allowDirectVideoIds: true
     allowDirectPlaylistIds: true
+    # OAuth giúp tránh bị YouTube chặn khi chạy lâu.
+    # Bật bằng cách chạy Lavalink 1 lần và làm theo hướng dẫn trong log.
     oauth:
       enabled: false
     remoteCipher:
       url: "https://cipher.kikkia.dev/"
-      userAgent: "DuViMusicBot"
-    pot:
-      token: ${YOUTUBE_POT_TOKEN:AKNnI0zy_g9ioWPUjzs49FwmQBSSl0AJCM5JB7lPYp}
-      visitorData: ${YOUTUBE_POT_VISITORDATA:CgtYNnJ4b1BPeVJJSSjAvq7NBjIKCgJWThIEGgAgOpoRRuy9GgGG4o=}
+      userAgent: "VietUniverseMusicBot"
     clients:
-      - TV
-      - TVHTML5_SIMPLY
       - MUSIC
       - WEB
       - WEBEMBEDDED
       - ANDROID_VR
+      - TV
+      - TVHTML5_SIMPLY
+      - IOS
 
 logging:
   file:
@@ -69,4 +71,4 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 10MB
-      max-history: 1
+      max-history: 2

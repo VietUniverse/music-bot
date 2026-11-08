@@ -1,0 +1,113 @@
+name: Music Bot
+
+# ─── Khi nào chạy ────────────────────────────────────────────────
+# GitHub giới hạn 1 job tối đa 6 giờ → đặt lịch mỗi 5 giờ để job mới
+# khởi động trước khi job cũ bị kill. Cron có độ lệch ngẫu nhiên để
+# tránh GitHub delay hàng loạt vào đúng phút tròn.
+on:
+  workflow_dispatch:
+    inputs:
+      bot:
+        description: "Chạy bot nào (1/2/3/all)"
+        default: "all"
+        required: false
+  schedule:
+    - cron: "23 */5 * * *"
+  push:
+    branches: [master]
+    paths:
+      - "bot.js"
+      - "application.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "scripts/**"
+      - ".github/workflows/bot.yml"
+
+# Mỗi bot một nhóm riêng — KHÔNG dùng chung group (đây là lỗi cũ khiến
+# 2 workflow huỷ lẫn nhau mỗi 5 giờ).
+concurrency:
+  group: music-bot-${{ matrix.bot }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    name: Bot ${{ matrix.bot }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - bot: 1
+            token_env: DISCORD_TOKEN
+            node_index: 0
+            local_lavalink: "1"
+          - bot: 2
+            token_env: DISCORD_TOKEN_2
+            node_index: 1
+            local_lavalink: "0"
+          - bot: 3
+            token_env: DISCORD_TOKEN_3
+            node_index: 2
+            local_lavalink: "0"
+
+    env:
+      DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+      DISCORD_TOKEN_2: ${{ secrets.DISCORD_TOKEN_2 }}
+      DISCORD_TOKEN_3: ${{ secrets.DISCORD_TOKEN_3 }}
+      LAVALINK_PASSWORD: ${{ secrets.LAVALINK_PASSWORD }}
+      TOKEN_ENV: ${{ matrix.token_env }}
+      BOT_NODE_INDEX: ${{ matrix.node_index }}
+      USE_LOCAL_LAVALINK: ${{ matrix.local_lavalink }}
+      JAVA_TOOL_OPTIONS: "-Xmx512m"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java 17
+        if: matrix.local_lavalink == '1'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Lavalink.jar
+        if: matrix.local_lavalink == '1'
+        uses: actions/cache@v4
+        with:
+          path: Lavalink.jar
+          key: lavalink-jar-4.0.8
+
+      - name: Download Lavalink
+        if: matrix.local_lavalink == '1'
+        run: |
+          if [ ! -s Lavalink.jar ]; then
+            curl -fsSL -o Lavalink.jar \
+              "https://github.com/lavalink-devs/Lavalink/releases/download/4.0.8/Lavalink.jar"
+          fi
+          ls -lh Lavalink.jar
+
+      - name: Install dependencies
+        run: |
+          npm ci --omit=dev || npm install --omit=dev
+
+      - name: Run bot (tự restart khi crash)
+        run: bash scripts/run.sh
+
+      - name: Upload logs khi job kết thúc
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bot-${{ matrix.bot }}-logs
+          path: |
+            lavalink.log
+            *.log
+          retention-days: 3
+          if-no-files-found: ignore

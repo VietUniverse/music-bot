@@ -34,7 +34,7 @@ lavalink:
     resamplingQuality: LOW
     trackStuckThresholdMs: 15000
     useSeekGhosting: true
-    playerUpdateInterval: 5
+    playerUpdateInterval: 2
     youtubeSearchEnabled: true
     soundcloudSearchEnabled: true
     gc-warnings: true

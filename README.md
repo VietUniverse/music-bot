@@ -1,89 +1,171 @@
-# 🎵 Discord Music Bot — Lavalink v4
+# 🎵 VietUniverse Music Bot
 
-Bot phát nhạc cho Discord: **discord.js v14 + Lavalink v4**, chạy được trên GitHub Actions, VPS, Docker, Fly.io, Railway.
+**Bot phát nhạc Discord cho cộng đồng Việt** — discord.js v14 + Lavalink v4, chạy 24/7 trên GitHub Actions, VPS, Docker hoặc Fly.io.
 
----
-
-## ⚠️ Vì sao GitHub Actions của bạn cứ bị tắt
-
-Mình đã soi 4 workflow cũ và tìm ra **4 nguyên nhân**, không phải do bạn cấu hình sai:
-
-| # | Nguyên nhân | Chi tiết |
-|---|---|---|
-| 1 | **Hai workflow tự huỷ lẫn nhau** | `main.yml` và `run.yml` **cùng** `concurrency.group: music-bot` và **cùng** cron `50 */5`. Mỗi 5 giờ cả hai cùng khởi động → GitHub huỷ một cái (cancel-in-progress). Bot bị "đá" liên tục, log nhìn như bị tắt ngẫu nhiên. |
-| 2 | **GitHub tự disable scheduled workflow sau 60 ngày repo không có commit** | Đây là chính sách của GitHub cho mọi repo public. Repo không commit → schedule bị tắt, không báo rõ. |
-| 3 | **Giới hạn 6 giờ/job** | Job đặt `timeout: 350 phút`, cron 5h50. Nhưng GitHub hay trễ cron 10–30 phút khi tải cao → có khoảng trống bot offline. Nếu trễ hơn, job mới khởi động khi job cũ vẫn chạy → lại cancel. |
-| 4 | **Vi phạm điều khoản GitHub Actions** | GitHub cấm dùng Actions để **host dịch vụ 24/7** (chỉ cho CI/CD). Bot nhạc chạy liên tục đúng vào diện này → GitHub có quyền throttle hoặc tắt workflow, thậm chí khoá tài khoản. **Đây là lý do không có cách nào "fix" triệt để trên Actions.** |
-
-### Đã sửa gì
-
-- ✅ Gộp 4 workflow thành **1** (`bot.yml`), mỗi bot một `concurrency` group riêng → không còn huỷ lẫn nhau.
-- ✅ Thêm **`keepalive.yml`**: mỗi ngày tự bật lại workflow bị tắt + commit "nhịp tim" để GitHub không disable schedule + tự dispatch nếu bot chết.
-- ✅ Thêm **supervisor** (`scripts/run.sh`): bot crash → tự chạy lại sau 5s; Lavalink chết → tự bật lại.
-- ✅ Bot **dùng node Lavalink cục bộ** (trước đây workflow tải Lavalink.jar nhưng bot lại chỉ dùng node công khai → vừa phí vừa chập chờn).
-- ✅ Cache `Lavalink.jar` + `npm` → khởi động nhanh hơn ~2 phút.
-- ✅ Health-check HTTP (`/health`) để monitor uptime.
-- ⚠️ **Khuyến nghị thật lòng:** chuyển sang VPS/Docker/Fly.io (mục bên dưới). Rẻ hơn thời gian bạn phải sửa liên tục, và không bị GitHub khoá.
+<p>
+  <img alt="Node" src="https://img.shields.io/badge/Node.js-22-339933?logo=node.js&logoColor=white">
+  <img alt="discord.js" src="https://img.shields.io/badge/discord.js-v14-5865F2?logo=discord&logoColor=white">
+  <img alt="Lavalink" src="https://img.shields.io/badge/Lavalink-v4-FF6600">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
+</p>
 
 ---
 
-## 🚀 Cài đặt
+## ✨ Giới thiệu
 
-### GitHub Secrets
+Một bot nhạc "đủ dùng cho cộng đồng" nhưng được xử lý đến nơi đến chốn:
+
+- **23 lệnh slash** đầy đủ: phát, tìm kiếm, hàng đợi, tua, bộ lọc, lời bài hát…
+- **Bảng điều khiển ngay trong chat voice channel** — bấm nút không cần gõ lệnh
+- **Không chết khi lỗi nguồn**: tự chuyển YouTube → SoundCloud → Deezer
+- **Sống sót qua restart**: nhớ 247, bài đang phát và vị trí, tự vào lại kênh
+- **Tự phục hồi**: bot crash tự chạy lại, Lavalink chết tự bật lại, workflow bị tắt tự bật lại
+- **Chạy đa bot**: một workflow, nhiều token, mỗi bot một concurrency group riêng
+
+---
+
+## 🚀 Tính năng nổi bật
+
+### 🎧 Phát nhạc
+
+| Tính năng | Mô tả |
+|---|---|
+| Đa nguồn | YouTube, SoundCloud, Deezer, link trực tiếp, playlist |
+| Fallback thông minh | Nguồn lỗi → tự tìm nguồn khác và phát tiếp, không dừng nhạc |
+| Playlist | Tôn trọng đúng thứ tự, tối đa 200 bài/lần, không tự xáo |
+| Chống kẹt | Bài stuck/lỗi → tự skip sau ngưỡng 15 giây |
+| Autoplay | Hết hàng đợi → tự tìm bài liên quan và phát tiếp |
+
+### 🎛 Điều khiển
+
+- **Bảng điều khiển trong voice chat** (2 hàng nút): ⏯ ⏭ ⏹ 🔀 🔁 · `-10s` `+10s` ⏱️ Tua · 📜 Hàng đợi
+- **Tua chính xác**: bấm ⏱️ → nhập `1:30` hoặc `90` → nhảy đúng vị trí
+- **Thanh tiến trình realtime**: cập nhật mỗi 3 giây, kèm trạng thái pause/loop
+- **Tự rời kênh** sau 60 giây nếu phòng trống (trừ khi bật 247)
+
+### ♾ 24/7 thực sự
+
+- `/247` giữ bot trong kênh dù không còn ai
+- Trạng thái được lưu vào `state/<bot>.json` **qua GitHub API**
+- Restart xong → tự vào lại voice, phát tiếp từ đúng giây đang dở, khôi phục 10 bài kế
+
+### 🛡 Độ bền vận hành
+
+| Cơ chế | Tác dụng |
+|---|---|
+| Supervisor (`scripts/run.sh`) | Bot thoát → tự chạy lại sau 5 giây |
+| Watchdog Lavalink | Node nhạc chết → tự khởi động lại |
+| Health-check `/health` | Trả JSON trạng thái cho uptime monitor |
+| Keepalive workflow | Bật lại workflow bị GitHub tắt, commit nhịp tim, tự dispatch khi bot chết |
+| Fallback node | Node chính lỗi → tự chuyển node dự phòng |
+
+---
+
+## 📜 Danh sách lệnh (23)
+
+### Phát nhạc
+| Lệnh | Chức năng |
+|---|---|
+| `/play <từ khoá \| URL>` | Phát hoặc thêm vào hàng đợi |
+| `/search <từ khoá>` | Tìm 10 kết quả, chọn bằng menu |
+| `/lyrics` | Lời bài hát đang phát |
+
+### Điều khiển
+| Lệnh | Chức năng |
+|---|---|
+| `/pause` · `/resume` | Tạm dừng / tiếp tục |
+| `/skip [số]` | Bỏ qua 1 hoặc nhiều bài |
+| `/stop` | Dừng và rời voice |
+| `/seek <mm:ss>` | Tua tới vị trí |
+| `/replay` | Phát lại từ đầu |
+| `/volume <1-200>` | Chỉnh âm lượng |
+
+### Hàng đợi
+| Lệnh | Chức năng |
+|---|---|
+| `/queue [trang]` | Xem hàng đợi (10 bài/trang) |
+| `/shuffle` | Xáo trộn |
+| `/remove <vị trí>` | Xoá một bài |
+| `/move <từ> <tới>` | Đổi vị trí |
+| `/clear` | Xoá toàn bộ hàng đợi |
+
+### Chế độ
+| Lệnh | Chức năng |
+|---|---|
+| `/loop <off\|track\|queue>` | Lặp bài / cả hàng đợi |
+| `/filter <preset>` | Bassboost · Nightcore · Vaporwave · 8D · Rock · Pop · Classic |
+| `/247` | Giữ bot trong kênh 24/7 |
+| `/autoplay` | Tự phát bài liên quan |
+
+### Hệ thống
+| Lệnh | Chức năng |
+|---|---|
+| `/nowplaying` | Bài đang phát + bảng điều khiển |
+| `/ping` | Độ trễ bot và node nhạc |
+| `/debug` | Thông tin kỹ thuật chi tiết |
+| `/help` | Danh sách lệnh |
+
+---
+
+## 🏗 Kiến trúc
+
+```
+┌──────────┐   slash command    ┌──────────────────┐
+│ Discord  │ ─────────────────► │  Bot (discord.js)│
+│  User    │ ◄───────────────── │   Node 22        │
+└──────────┘   embed + button   └────────┬─────────┘
+                                          │ Lavalink protocol (WS)
+                                          ▼
+                                 ┌──────────────────┐
+                                 │ Lavalink v4 node │
+                                 │  (công khai)     │
+                                 └────────┬─────────┘
+                                          │ Opus audio
+                                          ▼
+                                   Discord Voice
+
+          Bot ──► GitHub Contents API ──► state/<bot>.json
+                 (lưu 247 + bài đang phát + vị trí)
+```
+
+---
+
+## ⚙️ Cài đặt
+
+### 1. Tạo bot Discord
+
+1. [Discord Developer Portal](https://discord.com/developers/applications) → **New Application**
+2. **Bot** → **Reset Token** → copy
+3. **OAuth2 → URL Generator**: scopes `bot` + `applications.commands`
+   Permissions: `Connect`, `Speak`, `Send Messages`, `Embed Links`, `Use Slash Commands`
+4. Mời bot vào server
+
+### 2. Thêm Secrets
 
 Repo → **Settings → Secrets and variables → Actions**:
 
 | Secret | Trạng thái | Ghi chú |
 |---|---|---|
-| `DISCORD_TOKEN` | ⛔ không dùng | Bot 1 đã tắt |
-| `DISCORD_TOKEN_2` | ✅ | token bot 2 (chạy Lavalink cục bộ) |
-| `DISCORD_TOKEN_3` | ✅ | token bot 3 |
-| `LAVALINK_PASSWORD` | ✅ | chuỗi bất kỳ, vd `matkhaula123` |
+| `DISCORD_TOKEN_2` | ✅ bắt buộc | token bot 2 |
+| `DISCORD_TOKEN_3` | ✅ bắt buộc | token bot 3 |
+| `LAVALINK_PASSWORD` | ⚪ tuỳ chọn | chỉ dùng khi tự host Lavalink |
+| `DISCORD_TOKEN` | ⛔ không dùng | bot 1 đã tắt |
 
-Sau đó vào tab **Actions → Music Bot → Run workflow**.
+### 3. Chạy
 
----
-
-## 📥 Playlist và YouTube Mix
-
-| Loại link | Hành vi |
-|---|---|
-| `youtube.com/playlist?list=PL…` | Thêm **đúng toàn bộ** playlist, giữ nguyên thứ tự |
-| `youtube.com/playlist?list=OLAK…`, `list=UU…` | Như trên |
-| `youtube.com/watch?v=…&list=RD…&start_radio=1` | **YouTube Mix (radio)** — YouTube tự sinh và **đổi nội dung mỗi lần mở**, không có cách nào tái tạo chính xác. Bot thêm bản snapshot hiện tại và cảnh báo màu vàng |
-| Link 1 video | Thêm đúng video đó |
-| Từ khoá | Tìm YouTube → SoundCloud → Deezer |
-
-Khi bạn dán **link**, bot **không bao giờ** fallback sang tìm kiếm bằng chuỗi URL nữa (đây là lỗi cũ khiến nó phát bài lung tung). Link lỗi → báo lỗi rõ ràng.
-
-## 🎮 Lệnh
-| Nhóm | Lệnh |
-|---|---|
-| Phát nhạc | `/play <từ khoá\|URL>` · `/search <từ khoá>` (chọn từ 10 kết quả) |
-| Điều khiển | `/pause` `/resume` `/skip [số]` `/stop` `/seek <mm:ss>` `/replay` |
-| Hàng đợi | `/queue [trang]` `/shuffle` `/remove <vị trí>` `/move <từ> <tới>` `/clear` |
-| Âm thanh | `/volume <1-200>` `/filter <bass\|nightcore\|vaporwave\|8d\|rock\|pop\|classic\|off>` |
-| Khác | `/247` (ở lại voice) · `/autoplay` · `/nowplaying` (có nút bấm) · `/lyrics` · `/ping` · `/debug` · `/help` |
-
-**Bảng điều khiển** (gửi vào **chat của voice channel** nếu bot có quyền, không thì gửi kênh gõ lệnh):
-
-| Hàng 1 | ⏯ pause/resume · ⏭ skip · ⏹ stop · 🔀 shuffle · 🔁 loop |
-|---|---|
-| Hàng 2 | `-10s` · `+10s` · ⏱️ **Tua** (mở hộp thoại nhập `1:30`) · 📜 **Hàng đợi** |
-
-Muốn bot nhắn được vào voice channel chat, cấp quyền **View Channel · Send Messages · Embed Links** cho bot ở kênh thoại đó. Không có quyền → bot tự lùi về kênh text bạn gõ lệnh.
-
-**Tính năng tự động:**
-- Tự rời voice sau 60s nếu phòng trống (tắt bằng `/247`).
-- Hết hàng đợi → tự tìm bài liên quan nếu bật `/autoplay`.
-- Lỗi nguồn → tự tìm nguồn khác (YouTube → SoundCloud → Deezer) và phát tiếp.
-- Treo/kẹt bài → tự skip.
+**Actions → Music Bot → Run workflow**
 
 ---
 
-## 🖥 Chạy ngoài GitHub Actions (khuyến nghị)
+## 🖥 Triển khai
 
-### Docker Compose (VPS)
+### GitHub Actions (miễn phí, đang dùng)
+
+- Cron mỗi 5 giờ, job tối đa 5h50
+- Không dùng chung concurrency group giữa các bot
+- `state/` được commit lại sau mỗi lần lưu
+
+### Docker Compose (VPS — khuyến nghị nếu cần ổn định)
 
 ```bash
 cp .env.example .env      # điền DISCORD_TOKEN + LAVALINK_PASSWORD
@@ -108,54 +190,65 @@ fly secrets set DISCORD_TOKEN=xxx LAVALINK_PASSWORD=yyy
 fly deploy
 ```
 
-### Chạy trực tiếp (cần Java 17 + Node 20+)
+### Chạy trực tiếp (Java 17 + Node 20+)
 
 ```bash
 npm install
-java -jar Lavalink.jar &     # tải jar từ release Lavalink v4
+java -jar Lavalink.jar &
 npm start
 ```
 
 ---
 
-## ♻️ 24/7 sống sót qua restart
+## 🔧 Xử lý sự cố
 
-Trên GitHub Actions, job bị restart mỗi ~5 giờ. Bot tự lưu trạng thái vào **`state/<bot>.json`** trong repo (qua GitHub Contents API) để sau restart vẫn tiếp tục:
+| Triệu chứng | Nguyên nhân | Cách xử lý |
+|---|---|---|
+| **"Lệnh đã hết hạn"** | Interaction quá 3 giây (bot restart/chậm) | Đã sửa: defer ngay đầu lệnh. Vẫn gặp khi đúng lúc restart |
+| **Bật 247 mà bot vẫn out** | Timer rời treo + thư viện auto-destroy | Đã sửa: huỷ timer + bỏ `destroyAfterMs` |
+| **Phát khác playlist** | Link là YouTube Mix (`list=RD`) — YouTube đổi mỗi lần mở | Bấm **Lưu** trong Mix để tạo `list=PL…` rồi dùng link đó |
+| **Nhạc lag, rè** | Node công khai quá tải + runner ở US/EU | Dùng VPS gần VN, hoặc đổi node |
+| **Actions tự tắt** | 60 ngày không commit / vi phạm ToS | `keepalive.yml` bật lại mỗi ngày; lâu dài nên chuyển VPS |
+| **Bot không vào lại kênh sau restart** | Chưa bật `/247` hoặc chưa có state | Bật `/247` một lần, kiểm tra `state/*.json` |
 
-| Dữ liệu lưu | Chi tiết |
-|---|---|
-| `/247` | bật/tắt + ID voice channel |
-| `/autoplay` | bật/tắt |
-| Bài đang phát | `encoded track` + vị trí (giây) |
-| Hàng đợi | 10 bài kế tiếp |
+---
 
-**Khi restart:** bot tự vào lại đúng voice channel, decode lại bài, phát tiếp từ đúng vị trí, giữ nguyên 247.
-
-**Khi nào lưu:** mỗi lần bật/tắt 247 hoặc autoplay, sau `/play`, và **ngay trước khi tắt** (SIGTERM). Nếu job bị kill cứng (hết 6 giờ) thì mất phần phát sinh sau lần lưu cuối.
-
-Yêu cầu: workflow phải có `permissions: contents: write` (đã khai báo sẵn) để bot commit được file state. Commit do bot tạo **không** kích hoạt workflow (GitHub chặn `GITHUB_TOKEN` trigger).
-
-## 📁 Cấu trúc
+## 📁 Cấu trúc dự án
 
 ```
-bot.js                     # toàn bộ logic bot
-application.yml            # cấu hình Lavalink
-scripts/run.sh             # supervisor (auto-restart)
-.github/workflows/bot.yml      # chạy bot
-.github/workflows/keepalive.yml # chống GitHub tắt workflow
-Dockerfile / docker-compose.yml / fly.toml
+bot.js                      # toàn bộ logic bot (23 lệnh, panel, state)
+application.yml             # cấu hình Lavalink
+scripts/run.sh              # supervisor: auto-restart bot + Lavalink
+state/                      # trạng thái bền (bot tự commit)
+.github/workflows/
+  ├── bot.yml               # chạy bot (matrix nhiều token)
+  └── keepalive.yml         # chống GitHub tắt workflow
+Dockerfile
+docker-compose.yml
+fly.toml
+.env.example
 ```
+
+---
+
+## ⚠️ Giới hạn đã biết
+
+- **GitHub Actions**: job tối đa 6 giờ, cron có thể trễ 10–30 phút; host dịch vụ 24/7 **không nằm trong mục đích của Actions** nên có rủi ro bị tắt.
+- **Node công khai**: miễn phí nhưng chất lượng phụ thuộc bên thứ ba, có thể quá tải hoặc chết bất cứ lúc nào.
+- **Voice chất lượng cao** cần node riêng (VPS) ở gần khu vực người dùng.
 
 ---
 
 ## 🔒 Bảo mật
 
-- **Không commit token** vào repo. File `.env` đã nằm trong `.gitignore`.
-- File `application.yml` cũ có nhúng `pot.token` YouTube — mình đã **xoá** vì token đó đã hết hạn và bị lộ công khai.
-- Nếu token Discord từng bị commit, hãy **Reset Token** trong Developer Portal.
+- Không commit token. `.env` đã nằm trong `.gitignore`.
+- `GITHUB_TOKEN` chỉ có hiệu lực trong job đang chạy, dùng để ghi `state/`.
+- Token YouTube POT từng bị lộ trong repo cũ đã được xoá — nếu token Discord từng bị commit, hãy **Reset Token** ngay.
 
 ---
 
 ## 📄 Giấy phép
 
-MIT
+MIT — dùng, sửa, chia sẻ tự do.
+
+> Dự án tham khảo ý tưởng từ cộng đồng Lavalink và lavalink-client.

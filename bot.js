@@ -145,6 +145,7 @@ const stay247 = new Set();      // guild luôn ở lại voice
 const autoplay = new Set();     // guild tự phát bài liên quan
 const emptyTimers = new Map();  // guild -> timeout rời voice
 const searchCache = new Map();  // userId -> { tracks, ts }
+const nowPlayingMsgs = new Map(); // guildId -> { channelId, messageId }
 
 // ─── Slash commands ─────────────────────────────────────────────
 const commands = [
@@ -444,13 +445,52 @@ client.lavalink.on("trackStart", (player, track) => {
     console.log(`▶ [${INSTANCE_ID}] ${track.info.title} (${player.node?.id || "?"})`);
     if (player.paused) player.resume().catch(() => {});
     const ch = client.channels.cache.get(player.textChannelId);
-    ch?.send({ embeds: [trackEmbed(track, "🎵 Đang phát", player)], components: [controlRow(player)] }).catch(() => {});
+    if (ch) {
+        ch.send({ embeds: [trackEmbed(track, "🎵 Đang phát", player)], components: [controlRow(player)] })
+            .then((msg) => nowPlayingMsgs.set(player.guildId, { channelId: ch.id, messageId: msg.id }))
+            .catch(() => {});
+    }
 });
 
 client.lavalink.on("trackEnd", (player, track, payload) => {
     if (payload?.reason === "replaced") return;
     console.log(`⏹ Track end: ${track?.info?.title} (${payload?.reason})`);
 });
+
+// ─── Cập nhật thanh tiến trình mỗi 10 giây ─────────────────────
+async function refreshNowPlaying() {
+    for (const [guildId, info] of nowPlayingMsgs) {
+        const player = getPlayer(guildId);
+        const track = player?.queue?.current;
+        if (!player || !track || !player.connected) {
+            nowPlayingMsgs.delete(guildId);
+            continue;
+        }
+        try {
+            const ch =
+                client.channels.cache.get(info.channelId) ||
+                (await client.channels.fetch(info.channelId).catch(() => null));
+            if (!ch?.isTextBased()) {
+                nowPlayingMsgs.delete(guildId);
+                continue;
+            }
+            const msg =
+                ch.messages.cache.get(info.messageId) ||
+                (await ch.messages.fetch(info.messageId).catch(() => null));
+            if (!msg) {
+                nowPlayingMsgs.delete(guildId);
+                continue;
+            }
+            await msg.edit({
+                embeds: [trackEmbed(track, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
+                components: [controlRow(player)],
+            });
+        } catch (e) {
+            if (e?.code === 10008 || e?.status === 404) nowPlayingMsgs.delete(guildId);
+        }
+    }
+}
+setInterval(refreshNowPlaying, 10_000);
 
 client.lavalink.on("queueEnd", async (player) => {
     const ch = client.channels.cache.get(player.textChannelId);

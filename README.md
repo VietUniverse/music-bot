@@ -33,11 +33,11 @@ Mình đã soi 4 workflow cũ và tìm ra **4 nguyên nhân**, không phải do 
 
 Repo → **Settings → Secrets and variables → Actions**:
 
-| Secret | Bắt buộc | Ghi chú |
+| Secret | Trạng thái | Ghi chú |
 |---|---|---|
-| `DISCORD_TOKEN` | ✅ | token bot 1 |
-| `DISCORD_TOKEN_2` | ❌ | token bot 2 (nếu dùng) |
-| `DISCORD_TOKEN_3` | ❌ | token bot 3 |
+| `DISCORD_TOKEN` | ⛔ không dùng | Bot 1 đã tắt |
+| `DISCORD_TOKEN_2` | ✅ | token bot 2 (chạy Lavalink cục bộ) |
+| `DISCORD_TOKEN_3` | ✅ | token bot 3 |
 | `LAVALINK_PASSWORD` | ✅ | chuỗi bất kỳ, vd `matkhaula123` |
 
 Sau đó vào tab **Actions → Music Bot → Run workflow**.

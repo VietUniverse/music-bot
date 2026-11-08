@@ -37,18 +37,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Bot 1 đã tắt theo yêu cầu — chỉ chạy bot 2 và 3.
+        # Bot 2 được giao chạy Lavalink cục bộ (local_lavalink: "1") để có node ổn định.
         include:
-          - bot: 1
-            token_env: DISCORD_TOKEN
-            node_index: 0
-            local_lavalink: "1"
           - bot: 2
             token_env: DISCORD_TOKEN_2
-            node_index: 1
-            local_lavalink: "0"
+            node_index: 0
+            local_lavalink: "1"
           - bot: 3
             token_env: DISCORD_TOKEN_3
-            node_index: 2
+            node_index: 1
             local_lavalink: "0"
 
     env:

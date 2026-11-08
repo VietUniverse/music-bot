@@ -1,17 +1,17 @@
 /**
- * ðŸŽµ Discord Music Bot â€” Lavalink v4
+ * 🎵 Discord Music Bot — Lavalink v4
  * ---------------------------------------------------------------
- * Cháº¡y Ä‘Æ°á»£c trÃªn GitHub Actions, VPS, Docker, Fly.io, Railway...
+ * Chạy được trên GitHub Actions, VPS, Docker, Fly.io, Railway...
  *
- * Biáº¿n mÃ´i trÆ°á»ng:
- *   DISCORD_TOKEN        (báº¯t buá»™c)  Token bot
- *   TOKEN_ENV            (tuá»³ chá»n)  TÃªn biáº¿n chá»©a token, vd: DISCORD_TOKEN_2
- *   LAVALINK_PASSWORD    (tuá»³ chá»n)  Máº­t kháº©u Lavalink cá»¥c bá»™
- *   LAVALINK_HOST        (máº·c Ä‘á»‹nh 127.0.0.1)
- *   LAVALINK_PORT        (máº·c Ä‘á»‹nh 2333)
- *   USE_LOCAL_LAVALINK   (1/0)       Æ¯u tiÃªn node cá»¥c bá»™
- *   BOT_NODE_INDEX       (tuá»³ chá»n)  Xoay vÃ²ng thá»© tá»± node dá»± phÃ²ng
- *   PORT                 (máº·c Ä‘á»‹nh 8080) cá»•ng health-check
+ * Biến môi trường:
+ *   DISCORD_TOKEN        (bắt buộc)  Token bot
+ *   TOKEN_ENV            (tuỳ chọn)  Tên biến chứa token, vd: DISCORD_TOKEN_2
+ *   LAVALINK_PASSWORD    (tuỳ chọn)  Mật khẩu Lavalink cục bộ
+ *   LAVALINK_HOST        (mặc định 127.0.0.1)
+ *   LAVALINK_PORT        (mặc định 2333)
+ *   USE_LOCAL_LAVALINK   (1/0)       Ưu tiên node cục bộ
+ *   BOT_NODE_INDEX       (tuỳ chọn)  Xoay vòng thứ tự node dự phòng
+ *   PORT                 (mặc định 8080) cổng health-check
  */
 
 const http = require("http");
@@ -29,7 +29,7 @@ const {
 } = require("discord.js");
 const { LavalinkManager } = require("lavalink-client");
 
-// â”€â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Config ─────────────────────────────────────────────────────
 const TOKEN_ENV = process.env.TOKEN_ENV || "DISCORD_TOKEN";
 const DISCORD_TOKEN = process.env[TOKEN_ENV] || process.env.DISCORD_TOKEN;
 const LAVALINK_PASSWORD = process.env.LAVALINK_PASSWORD || "youshallnotpass";
@@ -42,11 +42,11 @@ const STARTED_AT = Date.now();
 console.log(`[BOT] Instance ${INSTANCE_ID} | token env: ${TOKEN_ENV} | local Lavalink: ${USE_LOCAL_LAVALINK}`);
 
 if (!DISCORD_TOKEN) {
-    console.error(`âŒ Thiáº¿u token (biáº¿n ${TOKEN_ENV} hoáº·c DISCORD_TOKEN)`);
+    console.error(`❌ Thiếu token (biến ${TOKEN_ENV} hoặc DISCORD_TOKEN)`);
     process.exit(1);
 }
 
-// â”€â”€â”€ Health-check server (cho Fly.io / Railway / uptime monitor) â”€
+// ─── Health-check server (cho Fly.io / Railway / uptime monitor) ─
 const HEALTH_PORT = Number(process.env.PORT || 8080);
 const health = http.createServer((req, res) => {
     if (req.url === "/health" || req.url === "/") {
@@ -67,7 +67,7 @@ const health = http.createServer((req, res) => {
 });
 health.listen(HEALTH_PORT, () => console.log(`[BOT] Health-check: http://0.0.0.0:${HEALTH_PORT}/health`));
 
-// â”€â”€â”€ Discord client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Discord client ─────────────────────────────────────────────
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -76,9 +76,9 @@ const client = new Client({
     ],
 });
 
-// â”€â”€â”€ Lavalink nodes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Node cá»¥c bá»™ (do workflow/docker khá»Ÿi Ä‘á»™ng) â€” á»•n Ä‘á»‹nh nháº¥t.
-// CÃ¡c node cÃ´ng khai chá»‰ lÃ  dá»± phÃ²ng khi node cá»¥c bá»™ cháº¿t.
+// ─── Lavalink nodes ─────────────────────────────────────────────
+// Node cục bộ (do workflow/docker khởi động) — ổn định nhất.
+// Các node công khai chỉ là dự phòng khi node cục bộ chết.
 const nodes = [];
 if (USE_LOCAL_LAVALINK) {
     nodes.push({
@@ -121,7 +121,7 @@ client.lavalink = new LavalinkManager({
     sendToShard: (guildId, payload) => client.guilds.cache.get(guildId)?.shard?.send(payload),
     autoSkip: true,
     client: { id: null, username: null },
-    // Tá»± Ä‘á»™ng chuyá»ƒn player sang node khÃ¡c náº¿u node hiá»‡n táº¡i cháº¿t
+    // Tự động chuyển player sang node khác nếu node hiện tại chết
     playerOptions: {
         applyVolumeAsFilter: false,
         defaultSearchPlatform: "ytsearch",
@@ -140,72 +140,72 @@ client.lavalink = new LavalinkManager({
 
 client.on("raw", (d) => client.lavalink.sendRawData(d));
 
-// â”€â”€â”€ Tráº¡ng thÃ¡i má»Ÿ rá»™ng â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const stay247 = new Set();      // guild luÃ´n á»Ÿ láº¡i voice
-const autoplay = new Set();     // guild tá»± phÃ¡t bÃ i liÃªn quan
-const emptyTimers = new Map();  // guild -> timeout rá»i voice
+// ─── Trạng thái mở rộng ─────────────────────────────────────────
+const stay247 = new Set();      // guild luôn ở lại voice
+const autoplay = new Set();     // guild tự phát bài liên quan
+const emptyTimers = new Map();  // guild -> timeout rời voice
 const searchCache = new Map();  // userId -> { tracks, ts }
 const nowPlayingMsgs = new Map(); // guildId -> { channelId, messageId }
 
-// â”€â”€â”€ Slash commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Slash commands ─────────────────────────────────────────────
 const commands = [
     new SlashCommandBuilder()
-        .setName("play").setDescription("ðŸŽµ PhÃ¡t nháº¡c tá»« YouTube/SoundCloud hoáº·c URL")
-        .addStringOption((o) => o.setName("query").setDescription("TÃªn bÃ i hÃ¡t, playlist hoáº·c URL").setRequired(true)),
+        .setName("play").setDescription("🎵 Phát nhạc từ YouTube/SoundCloud hoặc URL")
+        .addStringOption((o) => o.setName("query").setDescription("Tên bài hát, playlist hoặc URL").setRequired(true)),
     new SlashCommandBuilder()
-        .setName("search").setDescription("ðŸ”Ž TÃ¬m 10 káº¿t quáº£ vÃ  chá»n bÃ i Ä‘á»ƒ phÃ¡t")
-        .addStringOption((o) => o.setName("query").setDescription("Tá»« khoÃ¡ tÃ¬m kiáº¿m").setRequired(true)),
+        .setName("search").setDescription("🔎 Tìm 10 kết quả và chọn bài để phát")
+        .addStringOption((o) => o.setName("query").setDescription("Từ khoá tìm kiếm").setRequired(true)),
     new SlashCommandBuilder()
-        .setName("skip").setDescription("â­ Bá» qua bÃ i hiá»‡n táº¡i")
-        .addIntegerOption((o) => o.setName("amount").setDescription("Sá»‘ bÃ i muá»‘n bá» qua").setMinValue(1).setMaxValue(20)),
-    new SlashCommandBuilder().setName("stop").setDescription("â¹ Dá»«ng phÃ¡t vÃ  rá»i voice channel"),
-    new SlashCommandBuilder().setName("pause").setDescription("â¸ Táº¡m dá»«ng"),
-    new SlashCommandBuilder().setName("resume").setDescription("â–¶ Tiáº¿p tá»¥c phÃ¡t"),
-    new SlashCommandBuilder().setName("queue").setDescription("ðŸ“œ Xem hÃ ng Ä‘á»£i")
+        .setName("skip").setDescription("⏭ Bỏ qua bài hiện tại")
+        .addIntegerOption((o) => o.setName("amount").setDescription("Số bài muốn bỏ qua").setMinValue(1).setMaxValue(20)),
+    new SlashCommandBuilder().setName("stop").setDescription("⏹ Dừng phát và rời voice channel"),
+    new SlashCommandBuilder().setName("pause").setDescription("⏸ Tạm dừng"),
+    new SlashCommandBuilder().setName("resume").setDescription("▶ Tiếp tục phát"),
+    new SlashCommandBuilder().setName("queue").setDescription("📜 Xem hàng đợi")
         .addIntegerOption((o) => o.setName("page").setDescription("Trang").setMinValue(1)),
-    new SlashCommandBuilder().setName("nowplaying").setDescription("ðŸŽ¶ BÃ i Ä‘ang phÃ¡t (kÃ¨m nÃºt Ä‘iá»u khiá»ƒn)"),
-    new SlashCommandBuilder().setName("volume").setDescription("ðŸ”Š Chá»‰nh Ã¢m lÆ°á»£ng")
-        .addIntegerOption((o) => o.setName("level").setDescription("1â€“200").setRequired(true).setMinValue(1).setMaxValue(200)),
-    new SlashCommandBuilder().setName("loop").setDescription("ðŸ” Cháº¿ Ä‘á»™ láº·p")
-        .addStringOption((o) => o.setName("mode").setDescription("Cháº¿ Ä‘á»™").setRequired(true)
+    new SlashCommandBuilder().setName("nowplaying").setDescription("🎶 Bài đang phát (kèm nút điều khiển)"),
+    new SlashCommandBuilder().setName("volume").setDescription("🔊 Chỉnh âm lượng")
+        .addIntegerOption((o) => o.setName("level").setDescription("1–200").setRequired(true).setMinValue(1).setMaxValue(200)),
+    new SlashCommandBuilder().setName("loop").setDescription("🔁 Chế độ lặp")
+        .addStringOption((o) => o.setName("mode").setDescription("Chế độ").setRequired(true)
             .addChoices(
-                { name: "âŒ Táº¯t", value: "off" },
-                { name: "ðŸ”‚ BÃ i hiá»‡n táº¡i", value: "track" },
-                { name: "ðŸ” Cáº£ hÃ ng Ä‘á»£i", value: "queue" },
+                { name: "❌ Tắt", value: "off" },
+                { name: "🔂 Bài hiện tại", value: "track" },
+                { name: "🔁 Cả hàng đợi", value: "queue" },
             )),
-    new SlashCommandBuilder().setName("shuffle").setDescription("ðŸ”€ XÃ¡o trá»™n hÃ ng Ä‘á»£i"),
-    new SlashCommandBuilder().setName("seek").setDescription("â© Tua tá»›i vá»‹ trÃ­")
-        .addStringOption((o) => o.setName("time").setDescription("mm:ss hoáº·c ss (vd 1:30)").setRequired(true)),
-    new SlashCommandBuilder().setName("remove").setDescription("ðŸ—‘ XoÃ¡ má»™t bÃ i khá»i hÃ ng Ä‘á»£i")
-        .addIntegerOption((o) => o.setName("index").setDescription("Vá»‹ trÃ­ (xem /queue)").setRequired(true).setMinValue(1)),
-    new SlashCommandBuilder().setName("move").setDescription("â†• Äá»•i vá»‹ trÃ­ bÃ i trong hÃ ng Ä‘á»£i")
-        .addIntegerOption((o) => o.setName("from").setDescription("Tá»« vá»‹ trÃ­").setRequired(true).setMinValue(1))
-        .addIntegerOption((o) => o.setName("to").setDescription("Tá»›i vá»‹ trÃ­").setRequired(true).setMinValue(1)),
-    new SlashCommandBuilder().setName("clear").setDescription("ðŸ§¹ XoÃ¡ toÃ n bá»™ hÃ ng Ä‘á»£i (giá»¯ bÃ i Ä‘ang phÃ¡t)"),
-    new SlashCommandBuilder().setName("replay").setDescription("âª PhÃ¡t láº¡i bÃ i hiá»‡n táº¡i tá»« Ä‘áº§u"),
-    new SlashCommandBuilder().setName("filter").setDescription("ðŸŽ› Bá»™ lá»c Ã¢m thanh")
-        .addStringOption((o) => o.setName("preset").setDescription("Chá»n bá»™ lá»c").setRequired(true)
+    new SlashCommandBuilder().setName("shuffle").setDescription("🔀 Xáo trộn hàng đợi"),
+    new SlashCommandBuilder().setName("seek").setDescription("⏩ Tua tới vị trí")
+        .addStringOption((o) => o.setName("time").setDescription("mm:ss hoặc ss (vd 1:30)").setRequired(true)),
+    new SlashCommandBuilder().setName("remove").setDescription("🗑 Xoá một bài khỏi hàng đợi")
+        .addIntegerOption((o) => o.setName("index").setDescription("Vị trí (xem /queue)").setRequired(true).setMinValue(1)),
+    new SlashCommandBuilder().setName("move").setDescription("↕ Đổi vị trí bài trong hàng đợi")
+        .addIntegerOption((o) => o.setName("from").setDescription("Từ vị trí").setRequired(true).setMinValue(1))
+        .addIntegerOption((o) => o.setName("to").setDescription("Tới vị trí").setRequired(true).setMinValue(1)),
+    new SlashCommandBuilder().setName("clear").setDescription("🧹 Xoá toàn bộ hàng đợi (giữ bài đang phát)"),
+    new SlashCommandBuilder().setName("replay").setDescription("⏪ Phát lại bài hiện tại từ đầu"),
+    new SlashCommandBuilder().setName("filter").setDescription("🎛 Bộ lọc âm thanh")
+        .addStringOption((o) => o.setName("preset").setDescription("Chọn bộ lọc").setRequired(true)
             .addChoices(
-                { name: "âŒ Táº¯t háº¿t", value: "off" },
-                { name: "ðŸ”Š Bassboost", value: "bass" },
-                { name: "ðŸŒ™ Nightcore", value: "nightcore" },
-                { name: "ðŸŒŠ Vaporwave", value: "vaporwave" },
-                { name: "ðŸŽ§ 8D Audio", value: "8d" },
-                { name: "ðŸŽ¸ Rock", value: "rock" },
-                { name: "ðŸŽ¹ Pop", value: "pop" },
-                { name: "ðŸŽ» Classic", value: "classic" },
+                { name: "❌ Tắt hết", value: "off" },
+                { name: "🔊 Bassboost", value: "bass" },
+                { name: "🌙 Nightcore", value: "nightcore" },
+                { name: "🌊 Vaporwave", value: "vaporwave" },
+                { name: "🎧 8D Audio", value: "8d" },
+                { name: "🎸 Rock", value: "rock" },
+                { name: "🎹 Pop", value: "pop" },
+                { name: "🎻 Classic", value: "classic" },
             )),
-    new SlashCommandBuilder().setName("247").setDescription("ðŸ“Œ Giá»¯ bot á»Ÿ láº¡i voice channel 24/7"),
-    new SlashCommandBuilder().setName("autoplay").setDescription("â™¾ Tá»± phÃ¡t bÃ i liÃªn quan khi háº¿t hÃ ng Ä‘á»£i"),
-    new SlashCommandBuilder().setName("lyrics").setDescription("ðŸ“ Lá»i bÃ i hÃ¡t Ä‘ang phÃ¡t"),
-    new SlashCommandBuilder().setName("ping").setDescription("ðŸ“¡ Kiá»ƒm tra Ä‘á»™ trá»… bot vÃ  node nháº¡c"),
-    new SlashCommandBuilder().setName("debug").setDescription("ðŸ” ThÃ´ng tin ká»¹ thuáº­t"),
-    new SlashCommandBuilder().setName("help").setDescription("â“ Danh sÃ¡ch lá»‡nh"),
+    new SlashCommandBuilder().setName("247").setDescription("📌 Giữ bot ở lại voice channel 24/7"),
+    new SlashCommandBuilder().setName("autoplay").setDescription("♾ Tự phát bài liên quan khi hết hàng đợi"),
+    new SlashCommandBuilder().setName("lyrics").setDescription("📝 Lời bài hát đang phát"),
+    new SlashCommandBuilder().setName("ping").setDescription("📡 Kiểm tra độ trễ bot và node nhạc"),
+    new SlashCommandBuilder().setName("debug").setDescription("🔍 Thông tin kỹ thuật"),
+    new SlashCommandBuilder().setName("help").setDescription("❓ Danh sách lệnh"),
 ].map((c) => c.toJSON());
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Helpers ────────────────────────────────────────────────────
 function formatDuration(ms) {
-    if (!ms || ms === 0 || !Number.isFinite(ms)) return "ðŸ”´ LIVE";
+    if (!ms || ms === 0 || !Number.isFinite(ms)) return "🔴 LIVE";
     const total = Math.floor(ms / 1000);
     const h = Math.floor(total / 3600);
     const m = Math.floor((total % 3600) / 60);
@@ -226,17 +226,17 @@ function parseTime(input) {
 }
 
 function progressBar(current, total, length = 14) {
-    if (!total || total <= 0) return "â–¬".repeat(length);
+    if (!total || total <= 0) return "▬".repeat(length);
     const ratio = Math.min(1, Math.max(0, current / total));
     const idx = Math.round(ratio * (length - 1));
-    return "â–¬".repeat(idx) + "ðŸ”˜" + "â–¬".repeat(Math.max(0, length - idx - 1));
+    return "▬".repeat(idx) + "🔘" + "▬".repeat(Math.max(0, length - idx - 1));
 }
 
 function requesterOf(track) {
     return track?.userData?.requester || track?.requester || null;
 }
 
-function trackEmbed(track, title = "ðŸŽµ Äang phÃ¡t", player = null) {
+function trackEmbed(track, title = "🎵 Đang phát", player = null) {
     const embed = new EmbedBuilder()
         .setColor(0x5865f2)
         .setAuthor({ name: title })
@@ -244,13 +244,13 @@ function trackEmbed(track, title = "ðŸŽµ Äang phÃ¡t", player = null) {
         .setURL(track.info.uri || null);
 
     const fields = [
-        { name: "ðŸ‘¤ Nghá»‡ sÄ©", value: (track.info.author || "KhÃ´ng rÃµ").slice(0, 100), inline: true },
-        { name: "â± Thá»i lÆ°á»£ng", value: formatDuration(track.info.duration), inline: true },
-        { name: "ðŸ“¡ Nguá»“n", value: track.info.sourceName || "unknown", inline: true },
+        { name: "👤 Nghệ sĩ", value: (track.info.author || "Không rõ").slice(0, 100), inline: true },
+        { name: "⏱ Thời lượng", value: formatDuration(track.info.duration), inline: true },
+        { name: "📡 Nguồn", value: track.info.sourceName || "unknown", inline: true },
     ];
     if (player?.queue?.current === track) {
         fields.push({
-            name: "ðŸŽš Tiáº¿n trÃ¬nh",
+            name: "🎚 Tiến trình",
             value: `${formatDuration(player.position)} ${progressBar(player.position, track.info.duration)} ${formatDuration(track.info.duration)}`,
             inline: false,
         });
@@ -259,7 +259,7 @@ function trackEmbed(track, title = "ðŸŽµ Äang phÃ¡t", player = null) {
 
     if (track.info.artworkUrl) embed.setThumbnail(track.info.artworkUrl);
     const req = requesterOf(track);
-    if (req) embed.setFooter({ text: `YÃªu cáº§u bá»Ÿi ${req.username || req.tag || "ai Ä‘Ã³"}` });
+    if (req) embed.setFooter({ text: `Yêu cầu bởi ${req.username || req.tag || "ai đó"}` });
     return embed;
 }
 
@@ -267,15 +267,15 @@ function controlRow(player) {
     return new ActionRowBuilder().addComponents(
         new ButtonBuilder()
             .setCustomId("np:toggle")
-            .setEmoji(player.paused ? "â–¶ï¸" : "â¸ï¸")
+            .setEmoji(player.paused ? "▶️" : "⏸️")
             .setStyle(player.paused ? ButtonStyle.Success : ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("np:skip").setEmoji("â­ï¸").setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId("np:shuffle").setEmoji("ðŸ”€").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("np:skip").setEmoji("⏭️").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("np:shuffle").setEmoji("🔀").setStyle(ButtonStyle.Secondary),
         new ButtonBuilder()
             .setCustomId("np:loop")
-            .setEmoji("ðŸ”")
+            .setEmoji("🔁")
             .setStyle(player.repeatMode === "off" ? ButtonStyle.Secondary : ButtonStyle.Success),
-        new ButtonBuilder().setCustomId("np:stop").setEmoji("â¹ï¸").setStyle(ButtonStyle.Danger),
+        new ButtonBuilder().setCustomId("np:stop").setEmoji("⏹️").setStyle(ButtonStyle.Danger),
     );
 }
 
@@ -292,9 +292,9 @@ async function registerCommands() {
     const rest = new REST({ version: "10" }).setToken(DISCORD_TOKEN);
     try {
         await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-        console.log(`âœ… ÄÃ£ Ä‘Äƒng kÃ½ ${commands.length} slash commands`);
+        console.log(`✅ Đã đăng ký ${commands.length} slash commands`);
     } catch (err) {
-        console.error("âŒ ÄÄƒng kÃ½ commands tháº¥t báº¡i:", err.message);
+        console.error("❌ Đăng ký commands thất bại:", err.message);
     }
 }
 
@@ -304,14 +304,14 @@ function getPlayer(guildId) {
 
 async function ensureVoice(interaction) {
     const guild = interaction.guild ?? (await client.guilds.fetch(interaction.guildId).catch(() => null));
-    if (!guild) return { error: "âŒ KhÃ´ng tÃ¬m tháº¥y server." };
+    if (!guild) return { error: "❌ Không tìm thấy server." };
 
     let member = interaction.member;
     if (!member?.voice) {
         member = await guild.members.fetch(interaction.user.id).catch(() => null);
     }
     const channel = member?.voice?.channel;
-    if (!channel) return { error: "âŒ Báº¡n cáº§n vÃ o má»™t voice channel trÆ°á»›c!" };
+    if (!channel) return { error: "❌ Bạn cần vào một voice channel trước!" };
     return { guild, channel, member };
 }
 
@@ -336,8 +336,8 @@ async function getOrCreatePlayer(guild, voiceChannel, textChannelId) {
 }
 
 /**
- * TÃ¬m nháº¡c vá»›i chuá»—i nguá»“n dá»± phÃ²ng.
- * YouTube trÆ°á»›c, rá»“i SoundCloud, rá»“i Deezer (náº¿u node cÃ³ LavaSrc).
+ * Tìm nhạc với chuỗi nguồn dự phòng.
+ * YouTube trước, rồi SoundCloud, rồi Deezer (nếu node có LavaSrc).
  */
 const SOURCE_CHAIN = ["ytsearch", "ytmsearch", "scsearch", "dzsearch"];
 
@@ -348,7 +348,7 @@ async function searchWithFallback(player, query, requester) {
             const res = await player.search({ query }, requester);
             if (res?.tracks?.length) return res;
         } catch (e) {
-            console.warn(`[SEARCH] URL lá»—i: ${e.message}`);
+            console.warn(`[SEARCH] URL lỗi: ${e.message}`);
         }
     }
 
@@ -356,11 +356,11 @@ async function searchWithFallback(player, query, requester) {
         try {
             const res = await player.search({ query: `${source}:${query}` }, requester);
             if (res?.tracks?.length) {
-                console.log(`[SEARCH] "${query.slice(0, 40)}" â†’ ${source} (${res.tracks.length})`);
+                console.log(`[SEARCH] "${query.slice(0, 40)}" → ${source} (${res.tracks.length})`);
                 return res;
             }
         } catch (e) {
-            console.warn(`[SEARCH] ${source} lá»—i: ${e.message?.slice(0, 100)}`);
+            console.warn(`[SEARCH] ${source} lỗi: ${e.message?.slice(0, 100)}`);
         }
     }
     return null;
@@ -373,9 +373,9 @@ function tagRequester(tracks, user) {
 }
 
 /**
- * Nháº­n diá»‡n link playlist YouTube.
- *  - list=PL... / OLAK... / UU...  â†’ playlist tháº­t, cá»‘ Ä‘á»‹nh
- *  - list=RD...                    â†’ Mix/radio tá»± Ä‘á»™ng, YouTube Ä‘á»•i má»—i láº§n má»Ÿ
+ * Nhận diện link playlist YouTube.
+ *  - list=PL... / OLAK... / UU...  → playlist thật, cố định
+ *  - list=RD...                    → Mix/radio tự động, YouTube đổi mỗi lần mở
  */
 function parsePlaylistUrl(input) {
     if (!/^https?:\/\//i.test(input)) return null;
@@ -393,22 +393,22 @@ function parsePlaylistUrl(input) {
     }
 }
 
-// â”€â”€â”€ Ready â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Ready ──────────────────────────────────────────────────────
 client.once("ready", async () => {
-    console.log(`ðŸ¤– Online: ${client.user.tag} | ${client.guilds.cache.size} server`);
+    console.log(`🤖 Online: ${client.user.tag} | ${client.guilds.cache.size} server`);
     client.user.setPresence({
-        activities: [{ name: "/play â€¢ nháº¡c chill 24/7", type: 2 }],
+        activities: [{ name: "/play • nhạc chill 24/7", type: 2 }],
         status: "online",
     });
     try {
         await client.lavalink.init({ id: client.user.id, username: client.user.username });
     } catch (e) {
-        console.error("âŒ init Lavalink:", e.message);
+        console.error("❌ init Lavalink:", e.message);
     }
     await registerCommands();
 });
 
-// â”€â”€â”€ Voice: tá»± rá»i khi phÃ²ng trá»‘ng â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Voice: tự rời khi phòng trống ──────────────────────────────
 client.on("voiceStateUpdate", (oldState, newState) => {
     const guildId = oldState.guild.id;
     const player = getPlayer(guildId);
@@ -424,7 +424,7 @@ client.on("voiceStateUpdate", (oldState, newState) => {
         const timer = setTimeout(async () => {
             const p = getPlayer(guildId);
             const ch = p && client.channels.cache.get(p.textChannelId);
-            ch?.send({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("ðŸ‘‹ KhÃ´ng cÃ²n ai trong voice â€” bot Ä‘Ã£ rá»i.")] }).catch(() => {});
+            ch?.send({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("👋 Không còn ai trong voice — bot đã rời.")] }).catch(() => {});
             await p?.destroy().catch(() => {});
             emptyTimers.delete(guildId);
         }, 60_000);
@@ -435,18 +435,18 @@ client.on("voiceStateUpdate", (oldState, newState) => {
     }
 });
 
-// â”€â”€â”€ Lavalink events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-client.lavalink.nodeManager.on("connect", (node) => console.log(`âœ… Node ${node.id} connected`));
-client.lavalink.nodeManager.on("disconnect", (node, reason) => console.warn(`âš ï¸ Node ${node.id} disconnected: ${reason}`));
-client.lavalink.nodeManager.on("error", (node, err) => console.error(`âŒ Node ${node.id}: ${err.message}`));
-client.lavalink.nodeManager.on("reconnecting", (node) => console.log(`ðŸ”„ Node ${node.id} reconnecting...`));
+// ─── Lavalink events ────────────────────────────────────────────
+client.lavalink.nodeManager.on("connect", (node) => console.log(`✅ Node ${node.id} connected`));
+client.lavalink.nodeManager.on("disconnect", (node, reason) => console.warn(`⚠️ Node ${node.id} disconnected: ${reason}`));
+client.lavalink.nodeManager.on("error", (node, err) => console.error(`❌ Node ${node.id}: ${err.message}`));
+client.lavalink.nodeManager.on("reconnecting", (node) => console.log(`🔄 Node ${node.id} reconnecting...`));
 
 client.lavalink.on("trackStart", (player, track) => {
-    console.log(`â–¶ [${INSTANCE_ID}] ${track.info.title} (${player.node?.id || "?"})`);
+    console.log(`▶ [${INSTANCE_ID}] ${track.info.title} (${player.node?.id || "?"})`);
     if (player.paused) player.resume().catch(() => {});
     const ch = client.channels.cache.get(player.textChannelId);
     if (ch) {
-        ch.send({ embeds: [trackEmbed(track, "ðŸŽµ Äang phÃ¡t", player)], components: [controlRow(player)] })
+        ch.send({ embeds: [trackEmbed(track, "🎵 Đang phát", player)], components: [controlRow(player)] })
             .then((msg) => nowPlayingMsgs.set(player.guildId, { channelId: ch.id, messageId: msg.id }))
             .catch(() => {});
     }
@@ -454,12 +454,10 @@ client.lavalink.on("trackStart", (player, track) => {
 
 client.lavalink.on("trackEnd", (player, track, payload) => {
     if (payload?.reason === "replaced") return;
-    console.log(`â¹ Track end: ${track?.info?.title} (${payload?.reason})`);
+    console.log(`⏹ Track end: ${track?.info?.title} (${payload?.reason})`);
 });
 
-// â”€â”€â”€ Cáº­p nháº­t thanh tiáº¿n trÃ¬nh má»—i 3 giÃ¢y â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// Lavalink gá»­i playerUpdate má»—i 2s (application.yml) â†’ 3s cho thanh cháº¡y mÆ°á»£t.
-// Váº«n dÆ°á»›i giá»›i háº¡n 5 láº§n sá»­a/5 giÃ¢y cá»§a Discord (3s â‰ˆ 1,7 láº§n/5s).
+// ─── Cập nhật thanh tiến trình mỗi 3 giây ──────────────────────
 async function refreshNowPlaying() {
     for (const [guildId, info] of nowPlayingMsgs) {
         const player = getPlayer(guildId);
@@ -484,7 +482,7 @@ async function refreshNowPlaying() {
                 continue;
             }
             await msg.edit({
-                embeds: [trackEmbed(track, player.paused ? "â¸ Äang táº¡m dá»«ng" : "ðŸŽ¶ Äang phÃ¡t", player)],
+                embeds: [trackEmbed(track, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
                 components: [controlRow(player)],
             });
         } catch (e) {
@@ -508,7 +506,7 @@ client.lavalink.on("queueEnd", async (player) => {
                 if (next) {
                     player.queue.add(next);
                     await player.play();
-                    ch?.send({ embeds: [new EmbedBuilder().setColor(0x5865f2).setDescription(`â™¾ **Autoplay:** ${next.info.title}`)] }).catch(() => {});
+                    ch?.send({ embeds: [new EmbedBuilder().setColor(0x5865f2).setDescription(`♾ **Autoplay:** ${next.info.title}`)] }).catch(() => {});
                     return;
                 }
             }
@@ -518,18 +516,18 @@ client.lavalink.on("queueEnd", async (player) => {
     }
 
     if (stay247.has(guildId)) {
-        ch?.send({ embeds: [new EmbedBuilder().setColor(0x5865f2).setDescription("ðŸ“­ Háº¿t hÃ ng Ä‘á»£i. Bot váº«n á»Ÿ láº¡i vÃ¬ **24/7** Ä‘ang báº­t.")] }).catch(() => {});
+        ch?.send({ embeds: [new EmbedBuilder().setColor(0x5865f2).setDescription("📭 Hết hàng đợi. Bot vẫn ở lại vì **24/7** đang bật.")] }).catch(() => {});
         return;
     }
 
-    ch?.send({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("ðŸ“­ Háº¿t hÃ ng Ä‘á»£i â€” rá»i voice sau 2 phÃºt.")] }).catch(() => {});
+    ch?.send({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("📭 Hết hàng đợi — rời voice sau 2 phút.")] }).catch(() => {});
     setTimeout(() => {
         if (!player.playing && !stay247.has(guildId)) player.destroy().catch(() => {});
     }, 120_000);
 });
 
 client.lavalink.on("trackError", async (player, track, payload) => {
-    console.error(`âŒ Track error: ${track?.info?.title} â€” ${payload?.exception?.message || payload?.error}`);
+    console.error(`❌ Track error: ${track?.info?.title} — ${payload?.exception?.message || payload?.error}`);
     const ch = client.channels.cache.get(player.textChannelId);
 
     const res = await searchWithFallback(player, track.info.title, requesterOf(track)).catch(() => null);
@@ -538,23 +536,23 @@ client.lavalink.on("trackError", async (player, track, payload) => {
     if (alt) {
         tagRequester([alt], requesterOf(track));
         player.queue.add(alt, 0);
-        ch?.send({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`âš ï¸ Lá»—i nguá»“n, thá»­ nguá»“n khÃ¡c: **${alt.info.title}**`)] }).catch(() => {});
+        ch?.send({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`⚠️ Lỗi nguồn, thử nguồn khác: **${alt.info.title}**`)] }).catch(() => {});
     } else {
-        ch?.send({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription(`âŒ KhÃ´ng phÃ¡t Ä‘Æ°á»£c: **${track?.info?.title}**`)] }).catch(() => {});
+        ch?.send({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription(`❌ Không phát được: **${track?.info?.title}**`)] }).catch(() => {});
         if (player.queue.tracks.length) player.skip().catch(() => {});
         else player.stopPlaying().catch(() => {});
     }
 });
 
 client.lavalink.on("trackStuck", async (player, track) => {
-    console.warn(`âš ï¸ Track stuck: ${track.info.title}`);
+    console.warn(`⚠️ Track stuck: ${track.info.title}`);
     const ch = client.channels.cache.get(player.textChannelId);
-    ch?.send({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`âš ï¸ BÃ i bá»‹ káº¹t: **${track.info.title}** â€” bá» qua.`)] }).catch(() => {});
+    ch?.send({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`⚠️ Bài bị kẹt: **${track.info.title}** — bỏ qua.`)] }).catch(() => {});
     if (player.queue.tracks.length) player.skip().catch(() => {});
     else player.stopPlaying().catch(() => {});
 });
 
-// â”€â”€â”€ Interaction handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Interaction handler ────────────────────────────────────────
 client.on("interactionCreate", async (interaction) => {
     try {
         if (interaction.isButton()) return await handleButton(interaction);
@@ -566,7 +564,7 @@ client.on("interactionCreate", async (interaction) => {
     } catch (err) {
         console.error(`[${INSTANCE_ID}] interaction error:`, err);
         await safeReply(interaction, {
-            content: "âŒ CÃ³ lá»—i xáº£y ra: `" + (err.message || "unknown").slice(0, 120) + "`",
+            content: "❌ Có lỗi xảy ra: `" + (err.message || "unknown").slice(0, 120) + "`",
             ephemeral: true,
         });
     }
@@ -575,7 +573,7 @@ client.on("interactionCreate", async (interaction) => {
 async function handleButton(interaction) {
     const player = getPlayer(interaction.guildId);
     if (!player) {
-        return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ player nÃ o Ä‘ang hoáº¡t Ä‘á»™ng.", ephemeral: true });
+        return interaction.reply({ content: "❌ Không có player nào đang hoạt động.", ephemeral: true });
     }
 
     switch (interaction.customId) {
@@ -602,7 +600,7 @@ async function handleButton(interaction) {
     if (!current) return interaction.update({ components: [] });
 
     return interaction.update({
-        embeds: [trackEmbed(current, player.paused ? "â¸ Äang táº¡m dá»«ng" : "ðŸŽ¶ Äang phÃ¡t", player)],
+        embeds: [trackEmbed(current, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
         components: [controlRow(player)],
     });
 }
@@ -610,11 +608,11 @@ async function handleButton(interaction) {
 async function handleSearchPick(interaction) {
     const cached = searchCache.get(interaction.user.id);
     if (!cached || Date.now() - cached.ts > 5 * 60_000) {
-        return interaction.update({ content: "âŒ› Káº¿t quáº£ Ä‘Ã£ háº¿t háº¡n, hÃ£y dÃ¹ng `/search` láº¡i.", embeds: [], components: [] });
+        return interaction.update({ content: "⌛ Kết quả đã hết hạn, hãy dùng `/search` lại.", embeds: [], components: [] });
     }
     const idx = Number(interaction.values[0]);
     const track = cached.tracks[idx];
-    if (!track) return interaction.update({ content: "âŒ KhÃ´ng tÃ¬m tháº¥y bÃ i.", embeds: [], components: [] });
+    if (!track) return interaction.update({ content: "❌ Không tìm thấy bài.", embeds: [], components: [] });
 
     const v = await ensureVoice(interaction);
     if (v.error) return interaction.update({ content: v.error, embeds: [], components: [] });
@@ -625,7 +623,7 @@ async function handleSearchPick(interaction) {
     if (!player.playing) await player.play();
 
     return interaction.update({
-        content: `âœ… ÄÃ£ thÃªm: **${track.info.title}**`,
+        content: `✅ Đã thêm: **${track.info.title}**`,
         embeds: [],
         components: [],
     });
@@ -634,26 +632,32 @@ async function handleSearchPick(interaction) {
 async function handleCommand(interaction) {
     const { commandName, guildId } = interaction;
     if (!guildId) {
-        return interaction.reply({ content: "âŒ Chá»‰ dÃ¹ng Ä‘Æ°á»£c trong server.", ephemeral: true });
+        return interaction.reply({ content: "❌ Chỉ dùng được trong server.", ephemeral: true });
     }
 
-    // â”€â”€ /help â”€â”€
+    // Xác nhận NGAY với Discord (giới hạn 3 giây) trước khi fetch member / tìm nhạc.
+    // Nếu không, lệnh sẽ báo "Lệnh đã hết hạn" khi bot chậm hoặc đang restart.
+    if (["play", "search", "lyrics"].includes(commandName) && !interaction.deferred && !interaction.replied) {
+        await interaction.deferReply().catch(() => {});
+    }
+
+    // ── /help ──
     if (commandName === "help") {
         const embed = new EmbedBuilder()
             .setColor(0x5865f2)
-            .setTitle("ðŸŽµ Music Bot â€” Danh sÃ¡ch lá»‡nh")
+            .setTitle("🎵 Music Bot — Danh sách lệnh")
             .setDescription(
                 [
-                    "**PhÃ¡t nháº¡c**",
-                    "`/play <tá»« khoÃ¡|URL>` â€” phÃ¡t hoáº·c thÃªm vÃ o hÃ ng Ä‘á»£i",
-                    "`/search <tá»« khoÃ¡>` â€” chá»n tá»« 10 káº¿t quáº£",
-                    "**Äiá»u khiá»ƒn**",
-                    "`/pause` `/resume` `/skip [sá»‘]` `/stop` `/seek <mm:ss>` `/replay`",
-                    "**HÃ ng Ä‘á»£i**",
-                    "`/queue [trang]` `/shuffle` `/remove <vá»‹ trÃ­>` `/move <tá»«> <tá»›i>` `/clear`",
-                    "**Ã‚m thanh**",
+                    "**Phát nhạc**",
+                    "`/play <từ khoá|URL>` — phát hoặc thêm vào hàng đợi",
+                    "`/search <từ khoá>` — chọn từ 10 kết quả",
+                    "**Điều khiển**",
+                    "`/pause` `/resume` `/skip [số]` `/stop` `/seek <mm:ss>` `/replay`",
+                    "**Hàng đợi**",
+                    "`/queue [trang]` `/shuffle` `/remove <vị trí>` `/move <từ> <tới>` `/clear`",
+                    "**Âm thanh**",
                     "`/volume <1-200>` `/filter <preset>`",
-                    "**KhÃ¡c**",
+                    "**Khác**",
                     "`/247` `/autoplay` `/nowplaying` `/lyrics` `/ping` `/debug`",
                 ].join("\n")
             )
@@ -661,55 +665,54 @@ async function handleCommand(interaction) {
         return interaction.reply({ embeds: [embed] });
     }
 
-    // â”€â”€ /ping â”€â”€
+    // ── /ping ──
     if (commandName === "ping") {
         const node = [...client.lavalink.nodeManager.nodes.values()].find((n) => n.connected);
         const embed = new EmbedBuilder()
             .setColor(0x57f287)
             .setDescription(
                 [
-                    `ðŸ“¡ **WebSocket:** ${client.ws.ping}ms`,
-                    `ðŸŽ§ **Node:** ${node ? `${node.id} â€” ${node.ping}ms` : "âŒ khÃ´ng cÃ³ node"}`,
-                    `â± **Uptime:** ${formatDuration(Date.now() - STARTED_AT)}`,
+                    `📡 **WebSocket:** ${client.ws.ping}ms`,
+                    `🎧 **Node:** ${node ? `${node.id} — ${node.ping}ms` : "❌ không có node"}`,
+                    `⏱ **Uptime:** ${formatDuration(Date.now() - STARTED_AT)}`,
                 ].join("\n")
             );
         return interaction.reply({ embeds: [embed] });
     }
 
-    // â”€â”€ /debug â”€â”€
+    // ── /debug ──
     if (commandName === "debug") {
         const player = getPlayer(guildId);
         const nodes = [...client.lavalink.nodeManager.nodes.values()].map(
-            (n) => `â€¢ \`${n.id}\` â€” ${n.connected ? "âœ…" : "âŒ"} ${n.ping ?? "?"}ms`
+            (n) => `• \`${n.id}\` — ${n.connected ? "✅" : "❌"} ${n.ping ?? "?"}ms`
         );
         return interaction.reply({
             ephemeral: true,
             embeds: [
                 new EmbedBuilder()
                     .setColor(0x5865f2)
-                    .setTitle("ðŸ” Debug")
+                    .setTitle("🔍 Debug")
                     .addFields(
                         { name: "Instance", value: `\`${INSTANCE_ID}\``, inline: true },
                         { name: "Guilds", value: `${client.guilds.cache.size}`, inline: true },
                         { name: "Players", value: `${client.lavalink.players.size}`, inline: true },
-                        { name: "Nodes", value: nodes.join("\n") || "â€”" },
+                        { name: "Nodes", value: nodes.join("\n") || "—" },
                         {
                             name: "Player",
                             value: player
                                 ? `Node: \`${player.node?.id}\`\nPlaying: ${player.playing}\nPaused: ${player.paused}\nVolume: ${player.volume}\nQueue: ${player.queue.tracks.length}`
-                                : "â€”",
+                                : "—",
                         }
                     ),
             ],
         });
     }
 
-    // â”€â”€ /play â”€â”€
+    // ── /play ──
     if (commandName === "play") {
         const v = await ensureVoice(interaction);
-        if (v.error) return interaction.reply({ content: v.error, ephemeral: true });
+        if (v.error) return safeReply(interaction, { content: v.error });
 
-        await interaction.deferReply();
         const raw = interaction.options.getString("query", true);
         const player = await getOrCreatePlayer(v.guild, v.channel, interaction.channelId);
 
@@ -718,11 +721,11 @@ async function handleCommand(interaction) {
         let res = null;
 
         if (isUrl) {
-            // â”€â”€ LINK: má»Ÿ Ä‘Ãºng playlist, TUYá»†T Äá»I khÃ´ng fallback sang tÃ¬m kiáº¿m â”€â”€
+            // ── LINK: mở đúng playlist, TUYỆT ĐỐI không fallback sang tìm kiếm ──
             const target = playlistInfo?.url || raw;
             res = await player.search({ query: target }, interaction.user).catch(() => null);
 
-            // Má»™t sá»‘ node chá»‰ tráº£ 1 bÃ i khi link cÃ³ &list= â†’ thá»­ láº¡i báº±ng playlist URL
+            // Một số node chỉ trả 1 bài khi link có &list= → thử lại bằng playlist URL
             if ((!res?.tracks?.length || res.loadType === "track") && playlistInfo) {
                 const retry = await player.search({ query: playlistInfo.url }, interaction.user).catch(() => null);
                 if (retry?.tracks?.length) res = retry;
@@ -731,22 +734,22 @@ async function handleCommand(interaction) {
             if (!res?.tracks?.length) {
                 return interaction.editReply({
                     content:
-                        "âŒ KhÃ´ng má»Ÿ Ä‘Æ°á»£c link nÃ y.\n" +
-                        "â€¢ Link cÃ³ thá»ƒ bá»‹ YouTube cháº·n / video riÃªng tÆ° / Ä‘Ã£ xoÃ¡\n" +
-                        "â€¢ Thá»­ láº¡i báº±ng tÃªn bÃ i hÃ¡t (bot sáº½ tÃ¬m trÃªn YouTube)",
+                        "❌ Không mở được link này.\n" +
+                        "• Link có thể bị YouTube chặn / video riêng tư / đã xoá\n" +
+                        "• Thử lại bằng tên bài hát (bot sẽ tìm trên YouTube)",
                 });
             }
         } else {
             res = await searchWithFallback(player, raw, interaction.user);
             if (!res?.tracks?.length) {
-                return interaction.editReply({ content: "âŒ KhÃ´ng tÃ¬m tháº¥y bÃ i nÃ o. Thá»­ tá»« khoÃ¡ khÃ¡c nhÃ©!" });
+                return interaction.editReply({ content: "❌ Không tìm thấy bài nào. Thử từ khoá khác nhé!" });
             }
         }
 
         const MAX_TRACKS = 200;
         let tracks = res.loadType === "playlist" ? res.tracks.slice(0, MAX_TRACKS) : [res.tracks[0]];
         if (res.loadType === "playlist" && res.tracks.length > MAX_TRACKS) {
-            console.warn(`[PLAY] playlist ${res.tracks.length} bÃ i, chá»‰ thÃªm ${MAX_TRACKS}`);
+            console.warn(`[PLAY] playlist ${res.tracks.length} bài, chỉ thêm ${MAX_TRACKS}`);
         }
 
         tagRequester(tracks, interaction.user);
@@ -756,49 +759,48 @@ async function handleCommand(interaction) {
 
         if (res.loadType === "playlist") {
             const radioNote = playlistInfo?.isRadio
-                ? "\n\nâš ï¸ **ÄÃ¢y lÃ  YouTube Mix (radio)** â€” danh sÃ¡ch do YouTube tá»± táº¡o vÃ  **thay Ä‘á»•i má»—i láº§n má»Ÿ**, nÃªn khÃ´ng thá»ƒ giá»‘ng 100% cÃ¡i báº¡n Ä‘ang xem. Muá»‘n cá»‘ Ä‘á»‹nh, dÃ¹ng link playlist tháº­t (`list=PLâ€¦`)."
+                ? "\n\n⚠️ **Đây là YouTube Mix (radio)** — danh sách do YouTube tự tạo và **thay đổi mỗi lần mở**, nên không thể giống 100% cái bạn đang xem. Muốn cố định, dùng link playlist thật (`list=PL…`)."
                 : "";
             return interaction.editReply({
                 embeds: [
                     new EmbedBuilder()
                         .setColor(playlistInfo?.isRadio ? 0xfee75c : 0x57f287)
-                        .setTitle(`ðŸ“¥ Playlist: ${res.playlist?.name || "khÃ´ng tÃªn"}`)
+                        .setTitle(`📥 Playlist: ${res.playlist?.name || "không tên"}`)
                         .setDescription(
-                            `âœ… ÄÃ£ thÃªm **${tracks.length}** bÃ i theo Ä‘Ãºng thá»© tá»±.\n\n` +
+                            `✅ Đã thêm **${tracks.length}** bài theo đúng thứ tự.\n\n` +
                                 tracks.slice(0, 5).map((t, i) => `**${i + 1}.** ${t.info.title}`).join("\n") +
-                                (tracks.length > 5 ? `\nâ€¦ vÃ  **${tracks.length - 5}** bÃ i ná»¯a` : "") +
+                                (tracks.length > 5 ? `\n… và **${tracks.length - 5}** bài nữa` : "") +
                                 radioNote
                         ),
                 ],
             });
         }
         return interaction.editReply({
-            embeds: [trackEmbed(tracks[0], player.playing ? "âž• ÄÃ£ thÃªm vÃ o hÃ ng Ä‘á»£i" : "ðŸŽµ Äang phÃ¡t", player)],
+            embeds: [trackEmbed(tracks[0], player.playing ? "➕ Đã thêm vào hàng đợi" : "🎵 Đang phát", player)],
         });
     }
 
-    // â”€â”€ /search â”€â”€
+    // ── /search ──
     if (commandName === "search") {
         const v = await ensureVoice(interaction);
-        if (v.error) return interaction.reply({ content: v.error, ephemeral: true });
+        if (v.error) return safeReply(interaction, { content: v.error });
 
-        await interaction.deferReply();
         const query = interaction.options.getString("query", true);
         const player = await getOrCreatePlayer(v.guild, v.channel, interaction.channelId);
         const res = await searchWithFallback(player, query, interaction.user);
 
-        if (!res?.tracks?.length) return interaction.editReply({ content: "âŒ KhÃ´ng cÃ³ káº¿t quáº£." });
+        if (!res?.tracks?.length) return interaction.editReply({ content: "❌ Không có kết quả." });
 
         const tracks = res.tracks.slice(0, 10);
         searchCache.set(interaction.user.id, { tracks, ts: Date.now() });
 
         const menu = new StringSelectMenuBuilder()
             .setCustomId("search:pick")
-            .setPlaceholder("Chá»n bÃ i Ä‘á»ƒ phÃ¡t")
+            .setPlaceholder("Chọn bài để phát")
             .addOptions(
                 tracks.map((t, i) => ({
                     label: t.info.title.slice(0, 90),
-                    description: `${t.info.author || "?"} â€¢ ${formatDuration(t.info.duration)}`.slice(0, 90),
+                    description: `${t.info.author || "?"} • ${formatDuration(t.info.duration)}`.slice(0, 90),
                     value: String(i),
                 }))
             );
@@ -807,43 +809,42 @@ async function handleCommand(interaction) {
             embeds: [
                 new EmbedBuilder()
                     .setColor(0x5865f2)
-                    .setTitle(`ðŸ”Ž Káº¿t quáº£ cho: ${query}`)
+                    .setTitle(`🔎 Kết quả cho: ${query}`)
                     .setDescription(tracks.map((t, i) => `**${i + 1}.** ${t.info.title} \`${formatDuration(t.info.duration)}\``).join("\n")),
             ],
             components: [new ActionRowBuilder().addComponents(menu)],
         });
     }
 
-    // â”€â”€ /lyrics â”€â”€
+    // ── /lyrics ──
     if (commandName === "lyrics") {
         const p = getPlayer(guildId);
         if (!p?.queue?.current) {
-            return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i nÃ o Ä‘ang phÃ¡t.", ephemeral: true });
+            return safeReply(interaction, { content: "❌ Không có bài nào đang phát." });
         }
-        await interaction.deferReply();
         try {
             const res = await p.getCurrentLyrics();
             const text = res?.lyrics || res?.plainLyrics;
-            if (!text) return interaction.editReply({ content: "âŒ KhÃ´ng tÃ¬m tháº¥y lá»i bÃ i hÃ¡t cho bÃ i nÃ y." });
+            if (!text) return interaction.editReply({ content: "❌ Không tìm thấy lời bài hát cho bài này." });
             return interaction.editReply({
                 embeds: [
                     new EmbedBuilder()
                         .setColor(0x5865f2)
-                        .setTitle(`ðŸ“ ${p.queue.current.info.title}`.slice(0, 250))
+                        .setTitle(`📝 ${p.queue.current.info.title}`.slice(0, 250))
                         .setDescription(text.slice(0, 4000)),
                 ],
             });
         } catch {
-            return interaction.editReply({ content: "âŒ Node nháº¡c khÃ´ng há»— trá»£ lá»i bÃ i hÃ¡t." });
+            return interaction.editReply({ content: "❌ Node nhạc không hỗ trợ lời bài hát." });
         }
     }
 
-    // CÃ¡c lá»‡nh cáº§n player
+    // Các lệnh cần player
     const player = getPlayer(guildId);
     const needPlayer = ["skip", "stop", "pause", "resume", "queue", "nowplaying", "volume", "loop",
         "shuffle", "seek", "remove", "move", "clear", "replay", "filter", "247", "autoplay"];
     if (needPlayer.includes(commandName) && !player) {
-        return interaction.reply({ content: "âŒ ChÆ°a cÃ³ nháº¡c nÃ o Ä‘ang phÃ¡t. DÃ¹ng `/play` trÆ°á»›c nhÃ©!", ephemeral: true });
+        return interaction.reply({ content: "❌ Chưa có nhạc nào đang phát. Dùng `/play` trước nhé!", ephemeral: true });
     }
 
     switch (commandName) {
@@ -851,19 +852,19 @@ async function handleCommand(interaction) {
             const amount = interaction.options.getInteger("amount") || 1;
             const title = player.queue.current?.info?.title || "?";
             await player.skip(amount > 1 ? amount : undefined).catch(() => {});
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`â­ ÄÃ£ bá» qua **${title}**`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`⏭ Đã bỏ qua **${title}**`)] });
         }
         case "stop": {
             await player.destroy();
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("â¹ ÄÃ£ dá»«ng vÃ  rá»i voice.")] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xed4245).setDescription("⏹ Đã dừng và rời voice.")] });
         }
         case "pause":
-            if (player.paused) return interaction.reply({ content: "â¸ Äang táº¡m dá»«ng rá»“i.", ephemeral: true });
+            if (player.paused) return interaction.reply({ content: "⏸ Đang tạm dừng rồi.", ephemeral: true });
             await player.pause();
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("â¸ ÄÃ£ táº¡m dá»«ng.")] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("⏸ Đã tạm dừng.")] });
         case "resume":
             await player.resume();
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("â–¶ Tiáº¿p tá»¥c phÃ¡t.")] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("▶ Tiếp tục phát.")] });
         case "queue": {
             const perPage = 10;
             const pages = Math.max(1, Math.ceil(player.queue.tracks.length / perPage));
@@ -872,7 +873,7 @@ async function handleCommand(interaction) {
             const totalMs = player.queue.tracks.reduce((a, t) => a + (t.info.duration || 0), 0);
 
             const desc = [
-                `**Äang phÃ¡t:** [${player.queue.current?.info?.title}](${player.queue.current?.info?.uri}) \`${formatDuration(player.queue.current?.info?.duration)}\``,
+                `**Đang phát:** [${player.queue.current?.info?.title}](${player.queue.current?.info?.uri}) \`${formatDuration(player.queue.current?.info?.duration)}\``,
                 "",
                 ...slice.map((t, i) => `**${(page - 1) * perPage + i + 1}.** ${t.info.title} \`${formatDuration(t.info.duration)}\``),
             ].join("\n");
@@ -881,67 +882,67 @@ async function handleCommand(interaction) {
                 embeds: [
                     new EmbedBuilder()
                         .setColor(0x5865f2)
-                        .setTitle(`ðŸ“œ HÃ ng Ä‘á»£i â€” trang ${page}/${pages}`)
+                        .setTitle(`📜 Hàng đợi — trang ${page}/${pages}`)
                         .setDescription(desc.slice(0, 4000))
-                        .setFooter({ text: `${player.queue.tracks.length} bÃ i â€¢ tá»•ng ${formatDuration(totalMs)}` }),
+                        .setFooter({ text: `${player.queue.tracks.length} bài • tổng ${formatDuration(totalMs)}` }),
                 ],
             });
         }
         case "nowplaying": {
             const cur = player.queue.current;
-            if (!cur) return interaction.reply({ content: "âŒ KhÃ´ng cÃ³ bÃ i nÃ o Ä‘ang phÃ¡t.", ephemeral: true });
+            if (!cur) return interaction.reply({ content: "❌ Không có bài nào đang phát.", ephemeral: true });
             return interaction.reply({
-                embeds: [trackEmbed(cur, player.paused ? "â¸ Äang táº¡m dá»«ng" : "ðŸŽ¶ Äang phÃ¡t", player)],
+                embeds: [trackEmbed(cur, player.paused ? "⏸ Đang tạm dừng" : "🎶 Đang phát", player)],
                 components: [controlRow(player)],
             });
         }
         case "volume": {
             const level = interaction.options.getInteger("level", true);
             await player.setVolume(level);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`ðŸ”Š Ã‚m lÆ°á»£ng: **${level}%**`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`🔊 Âm lượng: **${level}%**`)] });
         }
         case "loop": {
             const mode = interaction.options.getString("mode", true);
             await player.setRepeatMode(mode);
-            const label = { off: "âŒ Táº¯t láº·p", track: "ðŸ”‚ Láº·p bÃ i hiá»‡n táº¡i", queue: "ðŸ” Láº·p cáº£ hÃ ng Ä‘á»£i" }[mode];
+            const label = { off: "❌ Tắt lặp", track: "🔂 Lặp bài hiện tại", queue: "🔁 Lặp cả hàng đợi" }[mode];
             return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(label)] });
         }
         case "shuffle": {
             const n = await player.queue.shuffle();
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`ðŸ”€ ÄÃ£ xÃ¡o trá»™n **${n ?? player.queue.tracks.length}** bÃ i.`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`🔀 Đã xáo trộn **${n ?? player.queue.tracks.length}** bài.`)] });
         }
         case "seek": {
             const ms = parseTime(interaction.options.getString("time", true));
-            if (ms === null) return interaction.reply({ content: "âŒ Äá»‹nh dáº¡ng thá»i gian khÃ´ng há»£p lá»‡ (vd `1:30`).", ephemeral: true });
+            if (ms === null) return interaction.reply({ content: "❌ Định dạng thời gian không hợp lệ (vd `1:30`).", ephemeral: true });
             await player.seek(ms);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`â© Tua tá»›i **${formatDuration(ms)}**`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`⏩ Tua tới **${formatDuration(ms)}**`)] });
         }
         case "remove": {
             const idx = interaction.options.getInteger("index", true) - 1;
             if (idx < 0 || idx >= player.queue.tracks.length) {
-                return interaction.reply({ content: "âŒ Vá»‹ trÃ­ khÃ´ng há»£p lá»‡.", ephemeral: true });
+                return interaction.reply({ content: "❌ Vị trí không hợp lệ.", ephemeral: true });
             }
             const [removed] = player.queue.splice(idx, 1);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`ðŸ—‘ ÄÃ£ xoÃ¡: **${removed?.info?.title ?? "?"}**`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`🗑 Đã xoá: **${removed?.info?.title ?? "?"}**`)] });
         }
         case "move": {
             const from = interaction.options.getInteger("from", true) - 1;
             const to = interaction.options.getInteger("to", true) - 1;
             if (from < 0 || from >= player.queue.tracks.length || to < 0 || to >= player.queue.tracks.length) {
-                return interaction.reply({ content: "âŒ Vá»‹ trÃ­ khÃ´ng há»£p lá»‡.", ephemeral: true });
+                return interaction.reply({ content: "❌ Vị trí không hợp lệ.", ephemeral: true });
             }
             const [moved] = player.queue.splice(from, 1);
             player.queue.add(moved, to);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`â†• ÄÃ£ chuyá»ƒn **${moved.info.title}** tá»›i vá»‹ trÃ­ **${to + 1}**.`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`↕ Đã chuyển **${moved.info.title}** tới vị trí **${to + 1}**.`)] });
         }
         case "clear": {
             const n = player.queue.tracks.length;
             player.queue.splice(0, n);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`ðŸ§¹ ÄÃ£ xoÃ¡ **${n}** bÃ i khá»i hÃ ng Ä‘á»£i.`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription(`🧹 Đã xoá **${n}** bài khỏi hàng đợi.`)] });
         }
         case "replay": {
             await player.seek(0);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x5865f2).setDescription("âª PhÃ¡t láº¡i tá»« Ä‘áº§u.")] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x5865f2).setDescription("⏪ Phát lại từ đầu.")] });
         }
         case "filter": {
             const preset = interaction.options.getString("preset", true);
@@ -957,46 +958,46 @@ async function handleCommand(interaction) {
                 case "classic": await fm.setEQPreset("Classic"); break;
                 default: break;
             }
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`ðŸŽ› Bá»™ lá»c: **${preset}**`)] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription(`🎛 Bộ lọc: **${preset}**`)] });
         }
         case "247": {
             if (stay247.has(guildId)) {
                 stay247.delete(guildId);
-                return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("ðŸ“Œ ÄÃ£ **táº¯t** cháº¿ Ä‘á»™ 24/7.")] });
+                return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("📌 Đã **tắt** chế độ 24/7.")] });
             }
             stay247.add(guildId);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("ðŸ“Œ ÄÃ£ **báº­t** 24/7 â€” bot sáº½ khÃ´ng rá»i voice khi phÃ²ng trá»‘ng.")] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("📌 Đã **bật** 24/7 — bot sẽ không rời voice khi phòng trống.")] });
         }
         case "autoplay": {
             if (autoplay.has(guildId)) {
                 autoplay.delete(guildId);
-                return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("â™¾ ÄÃ£ **táº¯t** autoplay.")] });
+                return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("♾ Đã **tắt** autoplay.")] });
             }
             autoplay.add(guildId);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("â™¾ ÄÃ£ **báº­t** autoplay â€” tá»± tÃ¬m bÃ i liÃªn quan khi háº¿t hÃ ng Ä‘á»£i.")] });
+            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("♾ Đã **bật** autoplay — tự tìm bài liên quan khi hết hàng đợi.")] });
         }
         default:
-            return interaction.reply({ content: "â“ Lá»‡nh chÆ°a há»— trá»£.", ephemeral: true });
+            return interaction.reply({ content: "❓ Lệnh chưa hỗ trợ.", ephemeral: true });
     }
 }
 
-// â”€â”€â”€ Error handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-client.on("error", (e) => console.error("âŒ Discord client error:", e.message));
-client.on("warn", (m) => console.warn("âš ï¸", m));
+// ─── Error handling ─────────────────────────────────────────────
+client.on("error", (e) => console.error("❌ Discord client error:", e.message));
+client.on("warn", (m) => console.warn("⚠️", m));
 
 process.on("unhandledRejection", (reason) => {
-    console.error(`[${INSTANCE_ID}] ðŸ§¨ Unhandled rejection:`, reason?.message || reason);
+    console.error(`[${INSTANCE_ID}] 🧨 Unhandled rejection:`, reason?.message || reason);
 });
 process.on("uncaughtException", (err) => {
-    console.error(`[${INSTANCE_ID}] ðŸ§¨ Uncaught exception:`, err);
+    console.error(`[${INSTANCE_ID}] 🧨 Uncaught exception:`, err);
 });
 
-// â”€â”€â”€ Graceful shutdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Graceful shutdown ──────────────────────────────────────────
 let shuttingDown = false;
 async function shutdown(signal) {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.log(`ðŸ›‘ ${signal} â€” Ä‘ang táº¯t...`);
+    console.log(`🛑 ${signal} — đang tắt...`);
     try {
         for (const player of client.lavalink.players.values()) {
             await player.destroy().catch(() => {});
@@ -1009,9 +1010,9 @@ async function shutdown(signal) {
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
 
-// â”€â”€â”€ Login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-console.log("ðŸš€ Äang Ä‘Äƒng nháº­p...");
+// ─── Login ──────────────────────────────────────────────────────
+console.log("🚀 Đang đăng nhập...");
 client.login(DISCORD_TOKEN).catch((e) => {
-    console.error("âŒ ÄÄƒng nháº­p tháº¥t báº¡i:", e.message);
+    console.error("❌ Đăng nhập thất bại:", e.message);
     process.exit(1);
 });

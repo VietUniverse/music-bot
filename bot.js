@@ -132,9 +132,8 @@ client.lavalink = new LavalinkManager({
             autoReconnect: true,
             destroyPlayer: false,
         },
-        onEmptyQueue: {
-            destroyAfterMs: 120_000,
-        },
+        // KHÔNG đặt destroyAfterMs: thư viện sẽ tự destroy player khi hết queue
+        // và phớt lờ chế độ /247. Bot tự quyết định trong sự kiện queueEnd.
     },
     queueOptions: {
         maxPreviousTracks: 20,
@@ -444,6 +443,15 @@ client.on("voiceStateUpdate", (oldState, newState) => {
     if (!vc) return;
 
     const humans = vc.members.filter((m) => !m.user.bot).size;
+
+    if (humans === 0 && stay247.has(guildId)) {
+        // 247 đang bật: huỷ mọi timer rời đã hẹn trước đó (nếu có)
+        if (emptyTimers.has(guildId)) {
+            clearTimeout(emptyTimers.get(guildId));
+            emptyTimers.delete(guildId);
+        }
+        return;
+    }
 
     if (humans === 0 && !stay247.has(guildId)) {
         if (emptyTimers.has(guildId)) return;
@@ -1054,7 +1062,19 @@ async function handleCommand(interaction) {
                 return interaction.reply({ embeds: [new EmbedBuilder().setColor(0xfee75c).setDescription("📌 Đã **tắt** chế độ 24/7.")] });
             }
             stay247.add(guildId);
-            return interaction.reply({ embeds: [new EmbedBuilder().setColor(0x57f287).setDescription("📌 Đã **bật** 24/7 — bot sẽ không rời voice khi phòng trống.")] });
+            if (emptyTimers.has(guildId)) {
+                clearTimeout(emptyTimers.get(guildId));
+                emptyTimers.delete(guildId);
+            }
+            return interaction.reply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0x57f287)
+                        .setDescription("📌 Đã **bật** 24/7 — bot sẽ không rời voice khi phòng trống.\n\n" +
+                            `🤖 Đang bật cho **${client.user.username}** (${process.env.TOKEN_ENV || "DISCORD_TOKEN"}).\n` +
+                            "⚠️ Nếu server có nhiều bot, phải bật 247 trên đúng con bot đang phát nhạc."),
+                ],
+            });
         }
         case "autoplay": {
             if (autoplay.has(guildId)) {

@@ -23,17 +23,17 @@ on:
       - "scripts/**"
       - ".github/workflows/bot.yml"
 
-# Mỗi bot một nhóm riêng — KHÔNG dùng chung group (đây là lỗi cũ khiến
-# 2 workflow huỷ lẫn nhau mỗi 5 giờ).
-concurrency:
-  group: music-bot-${{ matrix.bot }}
-  cancel-in-progress: true
-
 jobs:
   run:
     name: Bot ${{ matrix.bot }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
+    # Mỗi bot một nhóm riêng — KHÔNG dùng chung group (đây là lỗi cũ khiến
+    # 2 workflow huỷ lẫn nhau mỗi 5 giờ).
+    # Lưu ý: `matrix` chỉ dùng được ở concurrency cấp JOB, không dùng được ở cấp workflow.
+    concurrency:
+      group: music-bot-${{ matrix.bot }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:

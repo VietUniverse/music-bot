@@ -28,11 +28,11 @@ lavalink:
       lowPass: true
       karaoke: true
       distortion: true
-    bufferDurationMs: 400
+    bufferDurationMs: 1000
     frameBufferDurationMs: 5000
     opusEncodingQuality: 10
     resamplingQuality: LOW
-    trackStuckThresholdMs: 10000
+    trackStuckThresholdMs: 15000
     useSeekGhosting: true
     playerUpdateInterval: 5
     youtubeSearchEnabled: true

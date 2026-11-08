@@ -371,6 +371,27 @@ function tagRequester(tracks, user) {
     }
 }
 
+/**
+ * Nhận diện link playlist YouTube.
+ *  - list=PL... / OLAK... / UU...  → playlist thật, cố định
+ *  - list=RD...                    → Mix/radio tự động, YouTube đổi mỗi lần mở
+ */
+function parsePlaylistUrl(input) {
+    if (!/^https?:\/\//i.test(input)) return null;
+    try {
+        const u = new URL(input);
+        const list = u.searchParams.get("list");
+        if (!list) return null;
+        return {
+            listId: list,
+            isRadio: list.startsWith("RD"),
+            url: `https://www.youtube.com/playlist?list=${list}`,
+        };
+    } catch {
+        return null;
+    }
+}
+
 // ─── Ready ──────────────────────────────────────────────────────
 client.once("ready", async () => {
     console.log(`🤖 Online: ${client.user.tag} | ${client.guilds.cache.size} server`);
@@ -647,26 +668,65 @@ async function handleCommand(interaction) {
         if (v.error) return interaction.reply({ content: v.error, ephemeral: true });
 
         await interaction.deferReply();
-        const query = interaction.options.getString("query", true);
+        const raw = interaction.options.getString("query", true);
         const player = await getOrCreatePlayer(v.guild, v.channel, interaction.channelId);
 
-        const res = await searchWithFallback(player, query, interaction.user);
-        if (!res?.tracks?.length) {
-            return interaction.editReply({ content: "❌ Không tìm thấy bài nào. Thử từ khoá khác nhé!" });
+        const isUrl = /^https?:\/\//i.test(raw);
+        const playlistInfo = parsePlaylistUrl(raw);
+        let res = null;
+
+        if (isUrl) {
+            // ── LINK: mở đúng playlist, TUYỆT ĐỐI không fallback sang tìm kiếm ──
+            const target = playlistInfo?.url || raw;
+            res = await player.search({ query: target }, interaction.user).catch(() => null);
+
+            // Một số node chỉ trả 1 bài khi link có &list= → thử lại bằng playlist URL
+            if ((!res?.tracks?.length || res.loadType === "track") && playlistInfo) {
+                const retry = await player.search({ query: playlistInfo.url }, interaction.user).catch(() => null);
+                if (retry?.tracks?.length) res = retry;
+            }
+
+            if (!res?.tracks?.length) {
+                return interaction.editReply({
+                    content:
+                        "❌ Không mở được link này.\n" +
+                        "• Link có thể bị YouTube chặn / video riêng tư / đã xoá\n" +
+                        "• Thử lại bằng tên bài hát (bot sẽ tìm trên YouTube)",
+                });
+            }
+        } else {
+            res = await searchWithFallback(player, raw, interaction.user);
+            if (!res?.tracks?.length) {
+                return interaction.editReply({ content: "❌ Không tìm thấy bài nào. Thử từ khoá khác nhé!" });
+            }
         }
 
-        const tracks = res.loadType === "playlist" ? res.tracks : [res.tracks[0]];
+        const MAX_TRACKS = 200;
+        let tracks = res.loadType === "playlist" ? res.tracks.slice(0, MAX_TRACKS) : [res.tracks[0]];
+        if (res.loadType === "playlist" && res.tracks.length > MAX_TRACKS) {
+            console.warn(`[PLAY] playlist ${res.tracks.length} bài, chỉ thêm ${MAX_TRACKS}`);
+        }
+
         tagRequester(tracks, interaction.user);
         player.queue.add(tracks);
         if (player.paused) await player.resume();
         if (!player.playing) await player.play();
 
         if (res.loadType === "playlist") {
+            const radioNote = playlistInfo?.isRadio
+                ? "\n\n⚠️ **Đây là YouTube Mix (radio)** — danh sách do YouTube tự tạo và **thay đổi mỗi lần mở**, nên không thể giống 100% cái bạn đang xem. Muốn cố định, dùng link playlist thật (`list=PL…`)."
+                : "";
             return interaction.editReply({
                 embeds: [
                     new EmbedBuilder()
-                        .setColor(0x57f287)
-                        .setDescription(`✅ Đã thêm playlist **${res.playlist?.name || "không tên"}** — **${tracks.length}** bài.`),
+                        .setColor(playlistInfo?.isRadio ? 0xfee75c : 0x57f287)
+                        .setTitle(`📥 Playlist: ${res.playlist?.name || "không tên"}`)
+                        .setDescription(
+                            `✅ Đã thêm **${tracks.length}** bài theo đúng thứ tự.\n\n` +
+                                tracks.slice(0, 5).map((t, i) => `**${i + 1}.** ${t.info.title}`).join("\n") +
+                                (tracks.length > 5 ? `\n… và **${tracks.length - 5}** bài nữa` : "") +
+                                radioNote
+                        ),
                 ],
             });
         }

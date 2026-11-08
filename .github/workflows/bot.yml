@@ -59,7 +59,7 @@ jobs:
       TOKEN_ENV: ${{ matrix.token_env }}
       BOT_NODE_INDEX: ${{ matrix.node_index }}
       USE_LOCAL_LAVALINK: ${{ matrix.local_lavalink }}
-      JAVA_TOOL_OPTIONS: "-Xmx512m"
+      JAVA_TOOL_OPTIONS: "-Xmx768m"
 
     steps:
       - name: Checkout

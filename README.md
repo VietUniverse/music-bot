@@ -44,8 +44,19 @@ Sau đó vào tab **Actions → Music Bot → Run workflow**.
 
 ---
 
-## 🎮 Lệnh
+## 📥 Playlist và YouTube Mix
 
+| Loại link | Hành vi |
+|---|---|
+| `youtube.com/playlist?list=PL…` | Thêm **đúng toàn bộ** playlist, giữ nguyên thứ tự |
+| `youtube.com/playlist?list=OLAK…`, `list=UU…` | Như trên |
+| `youtube.com/watch?v=…&list=RD…&start_radio=1` | **YouTube Mix (radio)** — YouTube tự sinh và **đổi nội dung mỗi lần mở**, không có cách nào tái tạo chính xác. Bot thêm bản snapshot hiện tại và cảnh báo màu vàng |
+| Link 1 video | Thêm đúng video đó |
+| Từ khoá | Tìm YouTube → SoundCloud → Deezer |
+
+Khi bạn dán **link**, bot **không bao giờ** fallback sang tìm kiếm bằng chuỗi URL nữa (đây là lỗi cũ khiến nó phát bài lung tung). Link lỗi → báo lỗi rõ ràng.
+
+## 🎮 Lệnh
 | Nhóm | Lệnh |
 |---|---|
 | Phát nhạc | `/play <từ khoá\|URL>` · `/search <từ khoá>` (chọn từ 10 kết quả) |

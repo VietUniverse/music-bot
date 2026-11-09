@@ -47,6 +47,25 @@ watch_lavalink() {
 start_lavalink || true
 [ "$LOCAL" = "1" ] && watch_lavalink &
 
+# ─── Tự dispatch chính mình trước khi hết 6 giờ ─────────────────
+# GitHub cron rất hay bị delay/bỏ khi tải cao → job chết mà không ai bật lại.
+# Cứ ~5h20m job tự gọi workflow_dispatch để run kế tiếp khởi động và cancel run này.
+if [ -n "${GITHUB_TOKEN:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
+  (
+    sleep $((5 * 3600 + 20 * 60))
+    echo "[supervisor] tự dispatch run kế tiếp..."
+    curl -fsS -X POST \
+      -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+      -H "Accept: application/vnd.github+json" \
+      -H "X-GitHub-Api-Version: 2022-11-28" \
+      "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/bot.yml/dispatches" \
+      -d '{"ref":"master"}' \
+      && echo "[supervisor] đã dispatch" \
+      || echo "[supervisor] dispatch thất bại"
+  ) &
+fi
+
+
 ATTEMPT=0
 while true; do
   ATTEMPT=$((ATTEMPT + 1))

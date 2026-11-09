@@ -8,7 +8,7 @@ name: Keepalive
 #  3. Nếu bot không còn chạy, tự dispatch lại workflow Music Bot.
 on:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: "17 * * * *"   # mỗi giờ, vì schedule của GitHub hay bị bỏ
   workflow_dispatch:
 
 permissions:

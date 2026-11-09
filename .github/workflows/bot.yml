@@ -3,6 +3,7 @@ name: Music Bot
 # Bot cần ghi file state/<bot>.json vào repo để nhớ trạng thái qua restart
 permissions:
   contents: write
+  actions: write   # để job tự dispatch chính nó trước khi hết 6 giờ
 
 # ─── Khi nào chạy ────────────────────────────────────────────────
 # GitHub giới hạn 1 job tối đa 6 giờ → đặt lịch mỗi 5 giờ để job mới
